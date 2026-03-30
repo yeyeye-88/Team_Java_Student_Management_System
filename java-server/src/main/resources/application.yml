@@ -3,50 +3,44 @@ security:
   jwt:
     secret-key: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
     expiration-time: 86400000
+
 server:
-  port: 22222
+  port: 22224  # 教学3班固定端口
+
 spring:
   application:
     name: java-server
   datasource:
-#    url: jdbc:mysql://202.194.14.120:3306/web_db?allowPublicKeyRetrieval=true&useSSL=false
-#    username: java_server
-#    password: JavaServer2025@
-    url: jdbc:mysql://202.194.14.120:3306/java_db?allowPublicKeyRetrieval=true&useSSL=false
-    username: java_server
-    password: JavaServer2025@
-#    url: jdbc:mysql://202.194.14.120:3306/java_1_01?allowPublicKeyRetrieval=true&useSSL=false
-#    username: java_1_01
-#    password: JavaP101@
-#    url: jdbc:mysql://202.194.14.120:3306/java_1_01?allowPublicKeyRetrieval=true&useSSL=false
-#    username: java_1_01
-#    password: JavaP101@
-#    url: jdbc:mysql://202.194.14.120:3306/java_2_01?allowPublicKeyRetrieval=true&useSSL=false
-#    username: java_2_01
-#    password: JavaP201@
-#    url: jdbc:mysql://202.194.14.120:3306/java_3_01?allowPublicKeyRetrieval=true&useSSL=false
-#    username: java3_01
-#    password: JavaP301@
+    url: jdbc:mysql://202.194.14.120:3306/java_3_10?allowPublicKeyRetrieval=true&useSSL=false
+    username: java_3_10
+    password: JavaP310@
     hikari:
       minimum-idle: 1
       maximum-pool-size: 2
   jpa:
-#    hibernate.ddl-auto: update
+    hibernate:
+      ddl-auto: update  # 去掉了注释，让JPA自动建表
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
   servlet:
     multipart:
       max-file-size: 200MB
       max-request-size: 200MB
+
   jmx:
-    enabled:false
+    enabled: false
+
   http:
     encoding:
       charset: UTF-8
       enabled: true
       force: true
+
 attach:
   folder: /teach-2025/
+
 logging:
-  config: classpath:loggback.xml
-#logging:
-#  level:
-#    root: info
+  config: classpath:logback.xml
