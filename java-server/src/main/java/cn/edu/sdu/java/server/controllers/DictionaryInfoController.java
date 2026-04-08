@@ -1,0 +1,23 @@
+package cn.edu.sdu.java.server.controllers;
+
+import cn.edu.sdu.java.server.payload.response.DataResponse;
+import cn.edu.sdu.java.server.services.DictionaryInfoService;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/api/dictionary")
+public class DictionaryInfoController {
+
+    private final DictionaryInfoService dictionaryInfoService;
+
+    public DictionaryInfoController(DictionaryInfoService dictionaryInfoService) {
+        this.dictionaryInfoService = dictionaryInfoService;
+    }
+
+    @PostMapping("/findAll")
+    public DataResponse findAll() {
+        return dictionaryInfoService.findAll();
+    }
+}
