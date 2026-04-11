@@ -148,72 +148,81 @@ public class StudentService {
     }
 
     public DataResponse studentEditSave(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");
-        Map<String,Object> form = dataRequest.getMap("form"); //参数获取Map对象
-        String num = CommonMethod.getString(form, "num");  //Map 获取属性的值
-        Student s = null;
-        Person p;
-        User u;
-        Optional<Student> op;
-        boolean isNew = false;
-        if (personId != null) {
-            op = studentRepository.findById(personId);  //查询对应数据库中主键为id的值的实体对象
-            if (op.isPresent()) {
-                s = op.get();
+        try{
+            Integer personId = dataRequest.getInteger("personId");
+            Map<String,Object> form = dataRequest.getMap("form"); //参数获取Map对象
+            String num = CommonMethod.getString(form, "num");  //Map 获取属性的值
+            //增加空值校验
+            if (num == null || num.isEmpty()) {
+                return CommonMethod.getReturnMessageError("学号不能为空！");
             }
-        }
-        Optional<Person> nOp = personRepository.findByNum(num); //查询是否存在num的人员
-        if (nOp.isPresent()) {
-            if (s == null || !s.getPerson().getNum().equals(num)) {
-                return CommonMethod.getReturnMessageError("新学号已经存在，不能添加或修改！");
+            Student s = null;
+            Person p;
+            User u;
+            Optional<Student> op;
+            boolean isNew = false;
+            if (personId != null) {
+                op = studentRepository.findById(personId);  //查询对应数据库中主键为id的值的实体对象
+                if (op.isPresent()) {
+                    s = op.get();
+                }
             }
-        }
-        if (s == null) {
-            p = new Person();
-            p.setNum(num);
-            p.setType("1");
-            personRepository.saveAndFlush(p);  //插入新的Person记录
-            personId = p.getPersonId();
-            String password = encoder.encode("123456");
-            u = new User();
-            u.setPersonId(personId);
-            u.setUserName(num);
-            u.setPassword(password);
-            u.setUserType(userTypeRepository.findByName(EUserType.ROLE_STUDENT.name()));
-            u.setCreateTime(DateTimeTool.parseDateTime(new Date()));
-            u.setCreatorId(CommonMethod.getPersonId());
-            userRepository.saveAndFlush(u); //插入新的User记录
-            s = new Student();   // 创建实体对象
-            s.setPersonId(personId);
-            studentRepository.saveAndFlush(s);  //插入新的Student记录
-            isNew = true;
-        } else {
-            p = s.getPerson();
-        }
-        personId = p.getPersonId();
-        if (!num.equals(p.getNum())) {   //如果人员编号变化，修改人员编号和登录账号
-            Optional<User> uOp = userRepository.findByPersonPersonId(personId);
-            if (uOp.isPresent()) {
-                u = uOp.get();
+            Optional<Person> nOp = personRepository.findByNum(num); //查询是否存在num的人员
+            if (nOp.isPresent()) {
+                if (s == null || !s.getPerson().getNum().equals(num)) {
+                    return CommonMethod.getReturnMessageError("新学号已经存在，不能添加或修改！");
+                }
+            }
+            if (s == null) {
+                p = new Person();
+                p.setNum(num);
+                p.setType("1");
+                personRepository.saveAndFlush(p);  //插入新的Person记录
+                personId = p.getPersonId();
+                String password = encoder.encode("123456");
+                u = new User();
+                u.setPersonId(personId);
                 u.setUserName(num);
-                userRepository.saveAndFlush(u);
+                u.setPassword(password);
+                u.setUserType(userTypeRepository.findByName(EUserType.ROLE_STUDENT.name()));
+                u.setCreateTime(DateTimeTool.parseDateTime(new Date()));
+                u.setCreatorId(CommonMethod.getPersonId());
+                userRepository.saveAndFlush(u); //插入新的User记录
+                s = new Student();   // 创建实体对象
+                s.setPersonId(personId);
+                studentRepository.saveAndFlush(s);  //插入新的Student记录
+                isNew = true;
+            } else {
+                p = s.getPerson();
             }
-            p.setNum(num);  //设置属性
+            personId = p.getPersonId();
+            if (!num.equals(p.getNum())) {   //如果人员编号变化，修改人员编号和登录账号
+                Optional<User> uOp = userRepository.findByPersonPersonId(personId);
+                if (uOp.isPresent()) {
+                    u = uOp.get();
+                    u.setUserName(num);
+                    userRepository.saveAndFlush(u);
+                }
+                p.setNum(num);  //设置属性
+            }
+            p.setName(CommonMethod.getString(form, "name"));
+            p.setDept(CommonMethod.getString(form, "dept"));
+            p.setCard(CommonMethod.getString(form, "card"));
+            p.setGender(CommonMethod.getString(form, "gender"));
+            p.setBirthday(CommonMethod.getString(form, "birthday"));
+            p.setEmail(CommonMethod.getString(form, "email"));
+            p.setPhone(CommonMethod.getString(form, "phone"));
+            p.setAddress(CommonMethod.getString(form, "address"));
+            personRepository.save(p);  // 修改保存人员信息
+            s.setMajor(CommonMethod.getString(form, "major"));
+            s.setClassName(CommonMethod.getString(form, "className"));
+            studentRepository.save(s);  //修改保存学生信息
+            systemService.modifyLog(s,isNew);
+            return CommonMethod.getReturnData(s.getPersonId());  // 将personId返回前端
+        }catch (Exception e){
+            log.error("保存学生信息失败", e);
+            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
         }
-        p.setName(CommonMethod.getString(form, "name"));
-        p.setDept(CommonMethod.getString(form, "dept"));
-        p.setCard(CommonMethod.getString(form, "card"));
-        p.setGender(CommonMethod.getString(form, "gender"));
-        p.setBirthday(CommonMethod.getString(form, "birthday"));
-        p.setEmail(CommonMethod.getString(form, "email"));
-        p.setPhone(CommonMethod.getString(form, "phone"));
-        p.setAddress(CommonMethod.getString(form, "address"));
-        personRepository.save(p);  // 修改保存人员信息
-        s.setMajor(CommonMethod.getString(form, "major"));
-        s.setClassName(CommonMethod.getString(form, "className"));
-        studentRepository.save(s);  //修改保存学生信息
-        systemService.modifyLog(s,isNew);
-        return CommonMethod.getReturnData(s.getPersonId());  // 将personId返回前端
     }
 
     public List<Map<String,Object>> getStudentScoreList(List<Score> sList) {
