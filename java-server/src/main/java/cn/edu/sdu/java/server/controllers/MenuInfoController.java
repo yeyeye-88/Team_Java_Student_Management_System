@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/menu")
+@RequestMapping("/api/menu")//定义接口路径前缀
 public class MenuInfoController {
 
     private final MenuInfoService menuInfoService;
@@ -17,8 +17,8 @@ public class MenuInfoController {
         this.menuInfoService = menuInfoService;
     }
 
-    @PostMapping("/findAll")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STUDENT') or hasRole('TEACHER')")
+    @PostMapping("/findAll")//定义接口的具体路径
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STUDENT') or hasRole('TEACHER')")//控制谁能访问这个接口
     public DataResponse findAll() {
         return menuInfoService.findAll();
     }

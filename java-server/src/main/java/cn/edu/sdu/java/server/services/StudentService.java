@@ -92,6 +92,11 @@ public class StudentService {
         return dataList;
     }
 
+    /**
+     * 查询学生列表（支持模糊查询）
+     * @param dataRequest 请求参数，包含 numName（学号/姓名关键字）
+     * @return 学生列表数据（Map 格式）
+     */
     public DataResponse getStudentList(DataRequest dataRequest) {
         String numName = dataRequest.getString("numName");
         List<Map<String,Object>> dataList = getStudentMapList(numName);
@@ -99,9 +104,14 @@ public class StudentService {
     }
 
 
-
+    /**
+     * 删除学生信息（同时删除关联的 Person 和 User）
+     * @param dataRequest 请求参数，包含 personId（学生主键）
+     * @return 操作结果（成功/失败）
+     */
     public DataResponse studentDelete(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");//获取student_id值
+        try{
+            Integer personId = dataRequest.getInteger("personId");//获取student_id值
 
             //在原有基础上添加空值校验，防止前端传空值导致异常
             if (personId == null || personId <= 0) {
@@ -130,7 +140,11 @@ public class StudentService {
 
     }
 
-
+    /**
+     * 根据 ID 查询单个学生详细信息
+     * @param dataRequest 请求参数，包含 personId（学生主键）
+     * @return 学生详细信息（Map 格式，包含 Person 和 Student 关联数据）
+     */
     public DataResponse getStudentInfo(DataRequest dataRequest) {
         try {
             Integer personId = dataRequest.getInteger("personId");
@@ -143,10 +157,20 @@ public class StudentService {
             if (op.isPresent()) {
                 s = op.get();
             }
+            return CommonMethod.getReturnData(getMapFromStudent(s));
+        } catch (Exception e) {
+            log.error("查询学生信息失败，personId: {}", dataRequest.getInteger("personId"), e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
         }
-        return CommonMethod.getReturnData(getMapFromStudent(s)); //这里回传包含学生信息的Map对象
     }
 
+    /**
+     * 保存学生信息（新增或修改）
+     * 新增时会自动创建 Person、User、Student 三条关联记录
+     * 修改时会检查学号是否重复，并同步更新 User 表的登录账号
+     * @param dataRequest 请求参数，包含 personId（修改时必填）和 form（表单数据 Map）
+     * @return 新增时返回新学生的 personId，修改时返回原 personId
+     */
     public DataResponse studentEditSave(DataRequest dataRequest) {
         try{
             Integer personId = dataRequest.getInteger("personId");
@@ -415,6 +439,12 @@ public class StudentService {
 
     }
 
+
+    /**
+     * 分页查询学生列表
+     * @param dataRequest 请求参数，包含 numName（关键字）、currentPage（当前页码）
+     * @return 分页数据（包含 dataTotal 总数、pageSize 每页数量、dataList 当前页数据）
+     */
     public DataResponse getStudentPageData(DataRequest dataRequest) {
         String numName = dataRequest.getString("numName");
         Integer cPage = dataRequest.getCurrentPage();
