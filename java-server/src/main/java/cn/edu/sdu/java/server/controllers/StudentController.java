@@ -54,6 +54,7 @@ public class StudentController {
      */
 
     @PostMapping("/studentDelete")
+    @PreAuthorize("hasRole('ADMIN')")
     public DataResponse studentDelete(@Valid @RequestBody DataRequest dataRequest) {
         return studentService.studentDelete(dataRequest);
     }
@@ -96,6 +97,7 @@ public class StudentController {
      * @param fileName     前端上传的文件名
      */
     @PostMapping(path = "/importFeeData")
+    @PreAuthorize("hasRole('ADMIN')")
     public DataResponse importFeeData(@RequestBody byte[] barr,
                                       @RequestParam(name = "uploader") String uploader,
                                       @RequestParam(name = "personId") String personIdStr,
@@ -108,7 +110,7 @@ public class StudentController {
      *
      */
     @PostMapping("/getStudentListExcl")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StreamingResponseBody> getStudentListExcl(@Valid @RequestBody DataRequest dataRequest) {
         return studentService.getStudentListExcl(dataRequest);
     }

@@ -98,9 +98,14 @@ public class StudentService {
      * @return 学生列表数据（Map 格式）
      */
     public DataResponse getStudentList(DataRequest dataRequest) {
-        String numName = dataRequest.getString("numName");
-        List<Map<String,Object>> dataList = getStudentMapList(numName);
-        return CommonMethod.getReturnData(dataList);  //按照测试框架规范会送Map的list
+        try {
+            String numName = dataRequest.getString("numName");
+            List<Map<String,Object>> dataList = getStudentMapList(numName);
+            return CommonMethod.getReturnData(dataList);  //按照测试框架规范会送Map的list
+        } catch (Exception e) {
+            log.error("查询学生列表失败", e);
+            return CommonMethod.getReturnMessageError("查询学生列表失败：" + e.getMessage());
+        }
     }
 
 
@@ -446,30 +451,35 @@ public class StudentService {
      * @return 分页数据（包含 dataTotal 总数、pageSize 每页数量、dataList 当前页数据）
      */
     public DataResponse getStudentPageData(DataRequest dataRequest) {
-        String numName = dataRequest.getString("numName");
-        Integer cPage = dataRequest.getCurrentPage();
-        int dataTotal = 0;
-        int size = 40;
-        List<Map<String,Object>> dataList = new ArrayList<>();
-        Page<Student> page = null;
-        Pageable pageable = PageRequest.of(cPage, size);
-        page = studentRepository.findStudentPageByNumName(numName, pageable);
-        Map<String,Object> m;
-        if (page != null) {
-            dataTotal = (int) page.getTotalElements();
-            List<Student> list = page.getContent();
-            if (!list.isEmpty()) {
-                for (Student student : list) {
-                    m = getMapFromStudent(student);
-                    dataList.add(m);
+        try {
+            String numName = dataRequest.getString("numName");
+            Integer cPage = dataRequest.getCurrentPage();
+            int dataTotal = 0;
+            int size = 40;
+            List<Map<String,Object>> dataList = new ArrayList<>();
+            Page<Student> page = null;
+            Pageable pageable = PageRequest.of(cPage, size);
+            page = studentRepository.findStudentPageByNumName(numName, pageable);
+            Map<String,Object> m;
+            if (page != null) {
+                dataTotal = (int) page.getTotalElements();
+                List<Student> list = page.getContent();
+                if (!list.isEmpty()) {
+                    for (Student student : list) {
+                        m = getMapFromStudent(student);
+                        dataList.add(m);
+                    }
                 }
             }
+            Map<String,Object> data = new HashMap<>();
+            data.put("dataTotal", dataTotal);
+            data.put("pageSize", size);
+            data.put("dataList", dataList);
+            return CommonMethod.getReturnData(data);
+        } catch (Exception e) {
+            log.error("分页查询学生列表失败", e);
+            return CommonMethod.getReturnMessageError("分页查询失败：" + e.getMessage());
         }
-        Map<String,Object> data = new HashMap<>();
-        data.put("dataTotal", dataTotal);
-        data.put("pageSize", size);
-        data.put("dataList", dataList);
-        return CommonMethod.getReturnData(data);
     }
 
 
