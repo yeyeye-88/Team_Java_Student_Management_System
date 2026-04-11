@@ -132,11 +132,14 @@ public class StudentService {
 
 
     public DataResponse getStudentInfo(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");
-        Student s = null;
-        Optional<Student> op;
-        if (personId != null) {
-            op = studentRepository.findById(personId); //根据学生主键从数据库查询学生的信息
+        try {
+            Integer personId = dataRequest.getInteger("personId");
+            if (personId == null || personId <= 0) {
+                return CommonMethod.getReturnMessageError("学生 ID 不能为空！");
+            }
+
+            Student s = null;
+            Optional<Student> op = studentRepository.findById(personId);
             if (op.isPresent()) {
                 s = op.get();
             }
