@@ -103,25 +103,31 @@ public class StudentService {
     public DataResponse studentDelete(DataRequest dataRequest) {
         Integer personId = dataRequest.getInteger("personId");//获取student_id值
 
-        //在原有基础上添加空值校验，防止前端传空值导致异常
-        if (personId == null || personId <= 0) {
-            return CommonMethod.getReturnMessageError("学生ID不能为空！");
-        }
-        Student s = null;
-        Optional<Student> op;
-        if (personId != null && personId > 0) {
-            op = studentRepository.findById(personId);   //查询获得实体对象
-            if(op.isPresent()) {
-                s = op.get();
-                Optional<User> uOp = userRepository.findById(personId); //查询对应该学生的账户
-                //删除对应该学生的账户
-                uOp.ifPresent(userRepository::delete);
-                Person p = s.getPerson();
-                studentRepository.delete(s);    //首先数据库永久删除学生信息
-                personRepository.delete(p);   // 然后数据库永久删除学生信息
+            //在原有基础上添加空值校验，防止前端传空值导致异常
+            if (personId == null || personId <= 0) {
+                return CommonMethod.getReturnMessageError("学生ID不能为空！");
             }
+            Student s = null;
+            Optional<Student> op;
+            if (personId != null && personId > 0) {
+                op = studentRepository.findById(personId);   //查询获得实体对象
+                if(op.isPresent()) {
+                    s = op.get();
+                    Optional<User> uOp = userRepository.findById(personId); //查询对应该学生的账户
+                    //删除对应该学生的账户
+                    uOp.ifPresent(userRepository::delete);
+                    Person p = s.getPerson();
+                    studentRepository.delete(s);    //首先数据库永久删除学生信息
+                    personRepository.delete(p);   // 然后数据库永久删除学生信息
+                }
+            }
+            return CommonMethod.getReturnMessageOK();  //通知前端操作正常
+
+        } catch(Exception e){
+            log.error("删除学生失败，personId: {}", dataRequest.getInteger("personId"), e);
+            return CommonMethod.getReturnMessageError("删除学生失败：" + e.getMessage());
         }
-        return CommonMethod.getReturnMessageOK();  //通知前端操作正常
+
     }
 
 
