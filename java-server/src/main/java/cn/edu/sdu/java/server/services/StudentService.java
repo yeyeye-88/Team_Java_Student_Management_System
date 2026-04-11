@@ -101,7 +101,12 @@ public class StudentService {
 
 
     public DataResponse studentDelete(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");  //获取student_id值
+        Integer personId = dataRequest.getInteger("personId");//获取student_id值
+
+        //在原有基础上添加空值校验，防止前端传空值导致异常
+        if (personId == null || personId <= 0) {
+            return CommonMethod.getReturnMessageError("学生ID不能为空！");
+        }
         Student s = null;
         Optional<Student> op;
         if (personId != null && personId > 0) {
