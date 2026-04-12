@@ -100,6 +100,7 @@ public class StudentService {
     public DataResponse getStudentList(DataRequest dataRequest) {
         try {
             String numName = dataRequest.getString("numName");
+            if (numName == null) numName = ""; // 防止传参为 null 导致查询失效
             List<Map<String,Object>> dataList = getStudentMapList(numName);
             return CommonMethod.getReturnData(dataList);  //按照测试框架规范会送Map的list
         } catch (Exception e) {
