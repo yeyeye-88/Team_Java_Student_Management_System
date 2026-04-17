@@ -134,7 +134,7 @@
 
 java-server/
 ├── src/main/java/
-│   ├── com/team/        # 团队包名
+│   ├── cn/edu/sdu/java/sever/        # 团队包名
 │   │   ├── configs/     # 配置类（Spring Security、JWT、数据库等）
 │   │   ├── models/      # JPA实体类（与数据库表一一对应）
 │   │   ├── repositorys/ # JPA数据访问层接口（继承JpaRepository）
@@ -157,7 +157,7 @@ java-server/
 
 java-fx/
 ├── src/main/java/
-│   ├── com/team/        # 团队包名
+│   ├── cn/edu/sdu/java/sever/        # 团队包名
 │   │   ├── controller/  # 前端控制器（处理界面交互、接口调用）
 │   │   ├── util/        # 前端工具类（数据渲染、交互提示、HTTP请求等）
 │   │   ├── AppStore/    # 课程基础类（状态管理）
