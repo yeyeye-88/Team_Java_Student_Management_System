@@ -489,58 +489,73 @@ public class StudentService {
         FamilyMember
      */
     public DataResponse getFamilyMemberList(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");
-        List<FamilyMember> fList = familyMemberRepository.findByStudentPersonId(personId);
-        List<Map<String,Object>> dataList = new ArrayList<>();
-        Map<String,Object> m;
-        if (fList != null) {
-            for (FamilyMember f : fList) {
-                m = new HashMap<>();
-                m.put("memberId", f.getMemberId());
-                m.put("personId", f.getStudent().getPersonId());
-                m.put("relation", f.getRelation());
-                m.put("name", f.getName());
-                m.put("gender", f.getGender());
-                m.put("age", f.getAge()+"");
-                m.put("unit", f.getUnit());
-                dataList.add(m);
+        try {
+            Integer personId = dataRequest.getInteger("personId");
+            List<FamilyMember> fList = familyMemberRepository.findByStudentPersonId(personId);
+            List<Map<String,Object>> dataList = new ArrayList<>();
+            Map<String,Object> m;
+            if (fList != null) {
+                for (FamilyMember f : fList) {
+                    m = new HashMap<>();
+                    m.put("memberId", f.getMemberId());
+                    m.put("personId", f.getStudent().getPersonId());
+                    m.put("relation", f.getRelation());
+                    m.put("name", f.getName());
+                    m.put("gender", f.getGender());
+                    m.put("age", f.getAge()+"");
+                    m.put("unit", f.getUnit());
+                    dataList.add(m);
+                }
             }
+            return CommonMethod.getReturnData(dataList);
+        } catch (Exception e) {
+            log.error("查询家庭成员列表失败", e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
         }
-        return CommonMethod.getReturnData(dataList);
     }
 
     public DataResponse familyMemberSave(DataRequest dataRequest) {
-        Map<String,Object> form = dataRequest.getMap("form");
-        Integer personId = CommonMethod.getInteger(form,"personId");
-        Integer memberId = CommonMethod.getInteger(form,"memberId");
-        Optional<FamilyMember> op;
-        FamilyMember f = null;
-        if(memberId != null) {
-            op = familyMemberRepository.findById(memberId);
-            if(op.isPresent()) {
-                f = op.get();
+        try {
+            Map<String,Object> form = dataRequest.getMap("form");
+            Integer personId = CommonMethod.getInteger(form,"personId");
+            Integer memberId = CommonMethod.getInteger(form,"memberId");
+            Optional<FamilyMember> op;
+            FamilyMember f = null;
+            if(memberId != null) {
+                op = familyMemberRepository.findById(memberId);
+                if(op.isPresent()) {
+                    f = op.get();
+                }
             }
+            if(f== null) {
+                f = new FamilyMember();
+                assert personId != null;
+                f.setStudent(studentRepository.findById(personId).get());
+            }
+            f.setRelation(CommonMethod.getString(form,"relation"));
+            f.setName(CommonMethod.getString(form,"name"));
+            f.setGender(CommonMethod.getString(form,"gender"));
+            f.setAge(CommonMethod.getInteger(form,"age"));
+            f.setUnit(CommonMethod.getString(form,"unit"));
+            familyMemberRepository.save(f);
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("保存家庭成员失败", e);
+            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
         }
-        if(f== null) {
-            f = new FamilyMember();
-            assert personId != null;
-            f.setStudent(studentRepository.findById(personId).get());
-        }
-        f.setRelation(CommonMethod.getString(form,"relation"));
-        f.setName(CommonMethod.getString(form,"name"));
-        f.setGender(CommonMethod.getString(form,"gender"));
-        f.setAge(CommonMethod.getInteger(form,"age"));
-        f.setUnit(CommonMethod.getString(form,"unit"));
-        familyMemberRepository.save(f);
-        return CommonMethod.getReturnMessageOK();
     }
 
     public DataResponse familyMemberDelete(DataRequest dataRequest) {
-        Integer memberId = dataRequest.getInteger("memberId");
-        Optional<FamilyMember> op;
-        op = familyMemberRepository.findById(memberId);
-        op.ifPresent(familyMemberRepository::delete);
-        return CommonMethod.getReturnMessageOK();
+        try {
+            Integer memberId = dataRequest.getInteger("memberId");
+            Optional<FamilyMember> op;
+            op = familyMemberRepository.findById(memberId);
+            op.ifPresent(familyMemberRepository::delete);
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("删除家庭成员失败", e);
+            return CommonMethod.getReturnMessageError("删除失败：" + e.getMessage());
+        }
     }
 
 
@@ -559,24 +574,29 @@ public class StudentService {
     }
 
     public DataResponse getStudentIntroduceData(DataRequest dataRequest) {
-        Integer personId = dataRequest.getInteger("personId");
-        Optional<Student> sOp;
-        if(personId == null || personId <= 0) {
-            String username = CommonMethod.getUsername();
-            sOp = studentRepository.findByPersonNum(username);  // 查询获得 Student对象
-        }else {
-            sOp = studentRepository.findById(personId);  // 根据personId查询获得 Student对象
+        try {
+            Integer personId = dataRequest.getInteger("personId");
+            Optional<Student> sOp;
+            if(personId == null || personId <= 0) {
+                String username = CommonMethod.getUsername();
+                sOp = studentRepository.findByPersonNum(username);  // 查询获得 Student对象
+            }else {
+                sOp = studentRepository.findById(personId);  // 根据personId查询获得 Student对象
+            }
+            if (sOp.isEmpty())
+                return CommonMethod.getReturnMessageError("学生不存在！");
+            Student s = sOp.get();
+            Map<String,Object> info = getMapFromStudent(s);  // 查询学生信息Map对象
+            List<Score> sList = scoreRepository.findByStudentPersonId(s.getPersonId()); //获得学生成绩对象集合
+            Map<String,Object> data = new HashMap<>();
+            data.put("info", info);
+            data.put("scoreList", getStudentScoreList(sList));
+            data.put("markList", getStudentMarkList(sList));
+            data.put("feeList", getStudentFeeList(s.getPersonId()));
+            return CommonMethod.getReturnData(data);//将前端所需数据保留Map对象里，返还前端
+        } catch (Exception e) {
+            log.error("查询学生介绍数据失败", e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
         }
-        if (sOp.isEmpty())
-            return CommonMethod.getReturnMessageError("学生不存在！");
-        Student s = sOp.get();
-        Map<String,Object> info = getMapFromStudent(s);  // 查询学生信息Map对象
-        List<Score> sList = scoreRepository.findByStudentPersonId(s.getPersonId()); //获得学生成绩对象集合
-        Map<String,Object> data = new HashMap<>();
-        data.put("info", info);
-        data.put("scoreList", getStudentScoreList(sList));
-        data.put("markList", getStudentMarkList(sList));
-        data.put("feeList", getStudentFeeList(s.getPersonId()));
-        return CommonMethod.getReturnData(data);//将前端所需数据保留Map对象里，返还前端
     }
 }
