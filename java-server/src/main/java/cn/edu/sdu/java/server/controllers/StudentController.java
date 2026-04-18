@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import org.springframework.validation.annotation.Validated;
+
 import java.util.*;
 
 /**
@@ -23,7 +25,7 @@ import java.util.*;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/student")
-
+@Validated
 public class StudentController {
     private final StudentService studentService;
     public StudentController(StudentService studentService) {
@@ -85,8 +87,6 @@ public class StudentController {
     public DataResponse studentEditSave(@Valid @RequestBody DataRequest dataRequest) {
         return studentService.studentEditSave(dataRequest);
     }
-
-
 
     /**
      * importFeeData 前端上传消费流水Excl表数据服务

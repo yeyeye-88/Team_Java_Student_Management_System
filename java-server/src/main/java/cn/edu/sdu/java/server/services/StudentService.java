@@ -182,10 +182,23 @@ public class StudentService {
             Integer personId = dataRequest.getInteger("personId");
             Map<String,Object> form = dataRequest.getMap("form"); //参数获取Map对象
             String num = CommonMethod.getString(form, "num");  //Map 获取属性的值
-            //增加空值校验
-            if (num == null || num.isEmpty()) {
+            String name = CommonMethod.getString(form, "name");
+            String major = CommonMethod.getString(form, "major");
+            
+            // --- 1. 参数校验 (安检门) ---
+            if (num == null || num.trim().isEmpty()) {
                 return CommonMethod.getReturnMessageError("学号不能为空！");
             }
+            if (name == null || name.trim().isEmpty()) {
+                return CommonMethod.getReturnMessageError("姓名不能为空！");
+            }
+            if (name.length() > 20) {
+                return CommonMethod.getReturnMessageError("姓名长度不能超过 20 个字符！");
+            }
+            if (major != null && major.length() > 50) {
+                return CommonMethod.getReturnMessageError("专业名称过长！");
+            }
+
             Student s = null;
             Person p;
             User u;
@@ -235,7 +248,7 @@ public class StudentService {
                 }
                 p.setNum(num);  //设置属性
             }
-            p.setName(CommonMethod.getString(form, "name"));
+            p.setName(name);
             p.setDept(CommonMethod.getString(form, "dept"));
             p.setCard(CommonMethod.getString(form, "card"));
             p.setGender(CommonMethod.getString(form, "gender"));
@@ -244,7 +257,7 @@ public class StudentService {
             p.setPhone(CommonMethod.getString(form, "phone"));
             p.setAddress(CommonMethod.getString(form, "address"));
             personRepository.save(p);  // 修改保存人员信息
-            s.setMajor(CommonMethod.getString(form, "major"));
+            s.setMajor(major);
             s.setClassName(CommonMethod.getString(form, "className"));
             studentRepository.save(s);  //修改保存学生信息
             systemService.modifyLog(s,isNew);
