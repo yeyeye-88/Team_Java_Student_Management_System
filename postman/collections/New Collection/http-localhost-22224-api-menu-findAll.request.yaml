@@ -1,0 +1,11 @@
+$kind: http-request
+name: http://localhost:22224/api/menu/findAll
+url: http://localhost:22224/api/menu/findAll
+method: POST
+headers:
+  Authorization: Bearer
+    eyJhbGcOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc3NTgwNDIwNCwiZXhwIjoxNzc1ODkwNjA0fQ.YLR3HBQc7xlKd4h9AbfuFjQW1DNf65qbBiKq2sognD0
+body:
+  type: json
+  content: "{}"
+order: 1776180329440
