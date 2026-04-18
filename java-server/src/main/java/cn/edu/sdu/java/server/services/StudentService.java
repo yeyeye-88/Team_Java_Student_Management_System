@@ -7,6 +7,7 @@ import cn.edu.sdu.java.server.repositorys.*;
 import cn.edu.sdu.java.server.util.ComDataUtil;
 import cn.edu.sdu.java.server.util.CommonMethod;
 import cn.edu.sdu.java.server.util.DateTimeTool;
+import cn.edu.sdu.java.server.util.ParamCheckUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.*;
@@ -185,17 +186,17 @@ public class StudentService {
             String name = CommonMethod.getString(form, "name");
             String major = CommonMethod.getString(form, "major");
             
-            // --- 1. 参数校验 (安检门) ---
-            if (num == null || num.trim().isEmpty()) {
-                return CommonMethod.getReturnMessageError("学号不能为空！");
-            }
-            if (name == null || name.trim().isEmpty()) {
-                return CommonMethod.getReturnMessageError("姓名不能为空！");
-            }
-            if (name.length() > 20) {
+            // --- 1. 使用工具类进行参数校验 ---
+            String errorMsg = ParamCheckUtil.checkRequired(num, "学号");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            errorMsg = ParamCheckUtil.checkRequired(name, "姓名");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            if (ParamCheckUtil.isOverLength(name, 20)) {
                 return CommonMethod.getReturnMessageError("姓名长度不能超过 20 个字符！");
             }
-            if (major != null && major.length() > 50) {
+            if (ParamCheckUtil.isOverLength(major, 50)) {
                 return CommonMethod.getReturnMessageError("专业名称过长！");
             }
 
