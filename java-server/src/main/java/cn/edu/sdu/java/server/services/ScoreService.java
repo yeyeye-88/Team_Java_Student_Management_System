@@ -83,6 +83,10 @@ public class ScoreService {
      */
     public DataResponse scoreSave(DataRequest dataRequest) {
         try {
+            // 权限拦截：只有管理员和教师能录入/修改成绩
+            if (!RoleCheckUtil.isAdmin() && !RoleCheckUtil.hasRole("TEACHER")) {
+                return CommonMethod.getReturnMessageError("权限不足，只有教师和管理员可以录入成绩！");
+            }
             Integer scoreId = dataRequest.getInteger("scoreId");
             Map<String, Object> form = dataRequest.getMap("form");
             Integer personId = CommonMethod.getInteger(form, "personId");
@@ -144,6 +148,10 @@ public class ScoreService {
      */
     public DataResponse scoreDelete(DataRequest dataRequest) {
         try {
+            // 权限拦截：只有管理员和教师能删除成绩
+            if (!RoleCheckUtil.isAdmin() && !RoleCheckUtil.hasRole("TEACHER")) {
+                return CommonMethod.getReturnMessageError("权限不足，只有教师和管理员可以删除成绩！");
+            }
             Integer scoreId = dataRequest.getInteger("scoreId");
             if (scoreId == null || scoreId <= 0) {
                 return CommonMethod.getReturnMessageError("成绩 ID 不能为空！");
