@@ -46,6 +46,8 @@ public class SecurityConfiguration {
                         authz -> {
                             try {
                                 authz
+                                        .requestMatchers("/api/auth/login", "/api/auth/getValidateCode", "/api/auth/testValidateInfo")
+                                        .permitAll()
                                         .requestMatchers("/api/**")
                                         .authenticated()
                                         .anyRequest().permitAll();

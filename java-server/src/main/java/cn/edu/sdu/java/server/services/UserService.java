@@ -78,6 +78,14 @@ public class UserService {
                 Optional<User> op = userRepository.findById(personId);
                 if (op.isPresent()) {
                     u = op.get();
+                    // 修改时，同步更新关联的 Person 信息
+                    Optional<Person> pOp = personRepository.findById(personId);
+                    if (pOp.isPresent()) {
+                        Person p = pOp.get();
+                        p.setName(userName); // 同步更新 Person 的 name
+                        p.setNum(userName);  // 同步更新 Person 的 num (学号/账号)
+                        personRepository.saveAndFlush(p);
+                    }
                 } else {
                     return CommonMethod.getReturnMessageError("用户不存在！");
                 }

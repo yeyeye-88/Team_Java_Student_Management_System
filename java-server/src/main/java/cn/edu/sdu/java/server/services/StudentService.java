@@ -8,6 +8,7 @@ import cn.edu.sdu.java.server.util.ComDataUtil;
 import cn.edu.sdu.java.server.util.CommonMethod;
 import cn.edu.sdu.java.server.util.DateTimeTool;
 import cn.edu.sdu.java.server.util.ParamCheckUtil;
+import cn.edu.sdu.java.server.util.RoleCheckUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.*;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -100,10 +102,19 @@ public class StudentService {
      */
     public DataResponse getStudentList(DataRequest dataRequest) {
         try {
+            // --- 使用 RoleCheckUtil 进行角色判断 ---
+            if (RoleCheckUtil.isStudent()) {
+                // 如果是学生，只查询他自己的信息
+                String username = CommonMethod.getUsername();
+                List<Map<String,Object>> dataList = getStudentMapList(username);
+                return CommonMethod.getReturnData(dataList);
+            }
+
+            // 管理员或其他角色：查询所有或模糊查询
             String numName = dataRequest.getString("numName");
-            if (numName == null) numName = ""; // 防止传参为 null 导致查询失效
+            if (numName == null) numName = ""; 
             List<Map<String,Object>> dataList = getStudentMapList(numName);
-            return CommonMethod.getReturnData(dataList);  //按照测试框架规范会送Map的list
+            return CommonMethod.getReturnData(dataList);  
         } catch (Exception e) {
             log.error("查询学生列表失败", e);
             return CommonMethod.getReturnMessageError("查询学生列表失败：" + e.getMessage());
@@ -116,35 +127,31 @@ public class StudentService {
      * @param dataRequest 请求参数，包含 personId（学生主键）
      * @return 操作结果（成功/失败）
      */
+    @Transactional
     public DataResponse studentDelete(DataRequest dataRequest) {
         try{
-            Integer personId = dataRequest.getInteger("personId");//获取student_id值
-
-            //在原有基础上添加空值校验，防止前端传空值导致异常
+            Integer personId = dataRequest.getInteger("personId");
+                
+            // 增强参数校验：拦截 null、负数、0、空格等非法输入
             if (personId == null || personId <= 0) {
-                return CommonMethod.getReturnMessageError("学生ID不能为空！");
+                return CommonMethod.getReturnMessageError("学生 ID 不能为空或必须大于 0！");
             }
-            Student s = null;
-            Optional<Student> op;
-            if (personId != null && personId > 0) {
-                op = studentRepository.findById(personId);   //查询获得实体对象
-                if(op.isPresent()) {
-                    s = op.get();
-                    Optional<User> uOp = userRepository.findById(personId); //查询对应该学生的账户
-                    //删除对应该学生的账户
-                    uOp.ifPresent(userRepository::delete);
-                    Person p = s.getPerson();
-                    studentRepository.delete(s);    //首先数据库永久删除学生信息
-                    personRepository.delete(p);   // 然后数据库永久删除学生信息
-                }
-            }
-            return CommonMethod.getReturnMessageOK();  //通知前端操作正常
-
+    
+            // 强制刷新缓存，确保删除操作直接作用于数据库
+            studentRepository.flush();
+            userRepository.flush();
+            personRepository.flush();
+    
+            // 按顺序删除（先子表后主表），即使某个表没有记录也不会报错
+            userRepository.deleteById(personId);
+            studentRepository.deleteById(personId);
+            personRepository.deleteById(personId);
+    
+            return CommonMethod.getReturnMessageOK();
         } catch(Exception e){
             log.error("删除学生失败，personId: {}", dataRequest.getInteger("personId"), e);
             return CommonMethod.getReturnMessageError("删除学生失败：" + e.getMessage());
         }
-
     }
 
     /**
