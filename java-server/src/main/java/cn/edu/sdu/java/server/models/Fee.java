@@ -22,7 +22,7 @@ public class Fee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer feeId;
     @ManyToOne
-    @JoinColumn(name = "personId")
+    @JoinColumn(name = "person_id")
     private Student student;
     @Size(max = 20)
     private String day;

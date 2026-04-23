@@ -28,11 +28,11 @@ public class User {
     private Integer personId;
 
     @ManyToOne()
-    @JoinColumn(name = "userTypeId")
+    @JoinColumn(name = "user_type_id")
     private UserType userType;
 
     @OneToOne
-    @JoinColumn(name="personId")
+    @JoinColumn(name="person_id")
     private Person person;
 
     @NotBlank
