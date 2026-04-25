@@ -20,4 +20,13 @@ public class MenuInfoService {
         List<MenuInfo> menuList = menuInfoRepository.findAll();
         return CommonMethod.getReturnData(menuList);
     }
+
+    public DataResponse findByUserTypeIds(String userTypeIds) {
+        try {
+            List<MenuInfo> menuList = menuInfoRepository.findByUserTypeIds(userTypeIds);
+            return CommonMethod.getReturnData(menuList);
+        } catch (Exception e) {
+            return CommonMethod.getReturnMessageError("查询菜单失败：" + e.getMessage());
+        }
+    }
 }

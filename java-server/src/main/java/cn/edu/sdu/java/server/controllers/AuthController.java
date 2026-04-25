@@ -32,8 +32,8 @@ public class AuthController {
         return authService.authenticateUser(loginRequest);
     }
     @PostMapping("/getValidateCode")
-    public DataResponse getValidateCode(@Valid @RequestBody DataRequest dataRequest) {
-        return authService.getValidateCode(dataRequest);
+    public DataResponse getValidateCode() {
+        return authService.getValidateCode();
     }
 
     @PostMapping("/testValidateInfo")
@@ -43,5 +43,14 @@ public class AuthController {
     @PostMapping("/registerUser")
     public DataResponse registerUser(@Valid @RequestBody DataRequest dataRequest) {
         return authService.registerUser(dataRequest);
+    }
+    
+    /**
+     * 生成 BCrypt 加密密码（临时调试用）
+     * 访问: GET /auth/generatePassword?password=123456
+     */
+    @GetMapping("/generatePassword")
+    public DataResponse generatePassword(@RequestParam String password) {
+        return authService.generatePassword(password);
     }
 }

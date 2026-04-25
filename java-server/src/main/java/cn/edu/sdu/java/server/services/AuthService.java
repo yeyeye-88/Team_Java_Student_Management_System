@@ -10,7 +10,8 @@ import cn.edu.sdu.java.server.util.CommonMethod;
 import cn.edu.sdu.java.server.util.DateTimeTool;
 import cn.edu.sdu.java.server.util.LoginControlUtil;
 import jakarta.validation.Valid;
-import org.springframework.core.io.ResourceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +24,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -35,8 +38,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final PasswordEncoder encoder;
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    public AuthService(PersonRepository personRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, StudentRepository studentRepository,AuthenticationManager authenticationManager, JwtService jwtService, PasswordEncoder encoder, ResourceLoader resourceLoader) {
+    public AuthService(PersonRepository personRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, StudentRepository studentRepository,AuthenticationManager authenticationManager, JwtService jwtService, PasswordEncoder encoder) {
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.userTypeRepository = userTypeRepository;
@@ -46,35 +50,39 @@ public class AuthService {
         this.encoder = encoder;
     }
     public ResponseEntity<?> authenticateUser(LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-        Optional<User> op= userRepository.findByUserName(loginRequest.getUsername());
-        if(op.isPresent()) {
-            User user= op.get();
-            user.setLastLoginTime(DateTimeTool.parseDateTime(new Date()));
-            Integer count = user.getLoginCount();
-            if (count == null)
-                count = 1;
-            else count += 1;
-            user.setLoginCount(count);
-            userRepository.save(user);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList();
+            Optional<User> op= userRepository.findByUserName(loginRequest.getUsername());
+            if(op.isPresent()) {
+                User user= op.get();
+                user.setLastLoginTime(DateTimeTool.parseDateTime(new Date()));
+                Integer count = user.getLoginCount();
+                if (count == null)
+                    count = 1;
+                else count += 1;
+                user.setLoginCount(count);
+                userRepository.save(user);
+            }
+            String jwt = jwtService.generateToken(userDetails);
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getPerName(),
+                    roles.getFirst()));
+        } catch (Exception e) {
+            log.error("登录失败: {}", e.getMessage());
+            return ResponseEntity.status(401).body(CommonMethod.getReturnMessageError("用户名或密码错误：" + e.getMessage()));
         }
-        String jwt = jwtService.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getPerName(),
-                roles.getFirst()));
     }
-    public DataResponse getValidateCode(DataRequest dataRequest) {
+    public DataResponse getValidateCode() {
         return CommonMethod.getReturnData(LoginControlUtil.getInstance().getValidateCodeDataMap());
     }
 
@@ -90,6 +98,19 @@ public class AuthService {
             return CommonMethod.getReturnMessageError("验证码错位！");
         return CommonMethod.getReturnMessageOK();
     }
+    
+    /**
+     * 生成 BCrypt 加密密码（用于修复数据库密码）
+     */
+    public DataResponse generatePassword(String password) {
+        String encoded = encoder.encode(password);
+        Map<String, Object> result = new HashMap<>();
+        result.put("original", password);
+        result.put("encoded", encoded);
+        result.put("sql", "UPDATE user SET password = '" + encoded + "' WHERE user_name = 'admin';");
+        return CommonMethod.getReturnData(result);
+    }
+    
     /*
      *  注册用户示例，我们项目暂时不用， 所有用户通过管理员添加，这里注册，没有考虑关联人员信息的创建，使用时参加学生添加功能的实现
      */
@@ -136,5 +157,4 @@ public class AuthService {
         }
         return CommonMethod.getReturnData(LoginControlUtil.getInstance().getValidateCodeDataMap());
     }
-
 }

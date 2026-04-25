@@ -20,4 +20,13 @@ public class DictionaryInfoService {
         List<DictionaryInfo> dictionaryList = dictionaryInfoRepository.findAll();
         return CommonMethod.getReturnData(dictionaryList);
     }
+
+    public DataResponse findRootList() {
+        try {
+            List<DictionaryInfo> dictionaryList = dictionaryInfoRepository.findRootList();
+            return CommonMethod.getReturnData(dictionaryList);
+        } catch (Exception e) {
+            return CommonMethod.getReturnMessageError("查询根字典失败：" + e.getMessage());
+        }
+    }
 }

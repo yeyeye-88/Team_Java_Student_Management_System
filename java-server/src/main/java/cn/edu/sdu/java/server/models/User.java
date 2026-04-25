@@ -32,6 +32,7 @@ public class User {
     private UserType userType;
 
     @OneToOne
+    @MapsId
     @JoinColumn(name="person_id")
     private Person person;
 
