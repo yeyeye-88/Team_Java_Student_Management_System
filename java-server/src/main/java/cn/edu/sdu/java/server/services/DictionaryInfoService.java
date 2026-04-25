@@ -21,6 +21,33 @@ public class DictionaryInfoService {
         return CommonMethod.getReturnData(dictionaryList);
     }
 
+    /**
+     * 根据字典类型 code 查询字典列表
+     */
+    public DataResponse findByCode(String code) {
+        try {
+            List<DictionaryInfo> dictionaryList = dictionaryInfoRepository.getDictionaryInfoList(code);
+            return CommonMethod.getReturnData(dictionaryList);
+        } catch (Exception e) {
+            return CommonMethod.getReturnMessageError("查询字典失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据父节点 ID 查询子字典
+     */
+    public DataResponse findByPid(Integer pid) {
+        try {
+            List<DictionaryInfo> dictionaryList = dictionaryInfoRepository.findByPid(pid);
+            return CommonMethod.getReturnData(dictionaryList);
+        } catch (Exception e) {
+            return CommonMethod.getReturnMessageError("查询子字典失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 查询根字典列表
+     */
     public DataResponse findRootList() {
         try {
             List<DictionaryInfo> dictionaryList = dictionaryInfoRepository.findRootList();
