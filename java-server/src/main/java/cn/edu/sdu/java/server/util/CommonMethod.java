@@ -88,6 +88,32 @@ public class CommonMethod {
             return (String)obj;
         return obj.toString();
     }
+    public static Boolean getBoolean(Map<String,Object> data,String key){
+        Object obj = data.get(key);
+        if(obj == null)
+            return false;
+        if(obj instanceof Boolean)
+            return (Boolean)obj;
+        return "true".equals(obj.toString());
+    }
+    public static List<?> getList(Map<String,Object> data, String key){
+        Object obj = data.get(key);
+        if(obj == null)
+            return new ArrayList<>();
+        if(obj instanceof List)
+            return (List<?>)obj;
+        else
+            return new ArrayList<>();
+    }
+    public static Map<String,Object> getMap(Map<String,Object> data,String key){
+        Object obj = data.get(key);
+        if(obj == null)
+            return new HashMap<>();
+        if(obj instanceof Map)
+            return (Map<String, Object>) obj;
+        else
+            return new HashMap<>();
+    }
 
     public static Integer getInteger(Map<String,Object> data,String key) {
         Object obj = data.get(key);
@@ -98,6 +124,46 @@ public class CommonMethod {
         String str = obj.toString();
         try {
             return (int)Double.parseDouble(str);
+        }catch(Exception e) {
+            return null;
+        }
+    }
+    public static Integer getInteger0(Map<String,Object> data,String key) {
+        Object obj = data.get(key);
+        if(obj == null)
+            return 0;
+        if(obj instanceof Integer)
+            return (Integer)obj;
+        String str = obj.toString();
+        try {
+            return (int)Double.parseDouble(str);
+        }catch(Exception e) {
+            return 0;
+        }
+    }
+    public static Long getLong(Map<String,Object> data,String key) {
+        Object obj = data.get(key);
+        if(obj == null)
+            return null;
+        if(obj instanceof Long)
+            return (Long)obj;
+        String str = obj.toString();
+        try {
+            return Long.parseLong(str);
+        }catch(Exception e) {
+            return null;
+        }
+    }
+
+    public static Double getDouble(Map<String,Object> data,String key) {
+        Object obj = data.get(key);
+        if(obj == null)
+            return null;
+        if(obj instanceof Double)
+            return (Double)obj;
+        String str = obj.toString();
+        try {
+            return Double.parseDouble(str);
         }catch(Exception e) {
             return null;
         }
@@ -115,6 +181,109 @@ public class CommonMethod {
             return Double.parseDouble(str);
         }catch(Exception e) {
             return d0;
+        }
+    }
+    public static Date getDate(Map<String,Object> data, String key) {
+        Object obj = data.get(key);
+        if(obj == null)
+            return null;
+        if(obj instanceof Date)
+            return (Date)obj;
+        String str = obj.toString();
+        return DateTimeTool.formatDateTime(str,"yyyy-MM-dd");
+    }
+    public static Date getTime(Map<String,Object> data,String key) {
+        Object obj = data.get(key);
+        if(obj == null)
+            return null;
+        if(obj instanceof Date)
+            return (Date)obj;
+        String str = obj.toString();
+        return DateTimeTool.formatDateTime(str,"yyyy-MM-dd HH:mm:ss");
+    }
+
+    public static String replaceNameValue(String html, Map<String,String>m) {
+        if(html== null || html.isEmpty())
+            return html;
+        StringBuilder buf = new StringBuilder();
+        StringTokenizer sz = new StringTokenizer(html,"$");
+        if(sz.countTokens()<=1)
+            return html;
+        String str,key,value;
+        int index;
+        while(sz.hasMoreTokens()) {
+            str = sz.nextToken();
+            if(str.charAt(0)== '{') {
+                index = str.indexOf("}",1);
+                key = str.substring(1,index);
+                value = m.get(key);
+                if(value== null){
+                    value = "";
+                }
+                buf.append(value).append(str, index + 1, str.length());
+            }else {
+                buf.append(str);
+            }
+        }
+        return buf.toString();
+    }
+
+    public static String addHeadInfo(String html,String head) {
+        int index0 = html.indexOf("<head>");
+        int index1 = html.indexOf("</head>");
+        return html.substring(0,index0+6)+head + html.substring(index1);
+    }
+
+    public static String removeErrorString(String html,String ... subs) {
+        if(html== null || html.isEmpty())
+            return html;
+        StringBuilder buf;
+        int index;
+        int oldIndex;
+        int slen;
+        String content = html;
+        for(String sub : subs) {
+            slen = sub.length();
+            buf = new StringBuilder();
+            index = 0;
+            oldIndex = 0;
+            while(index >= 0) {
+                index = content.indexOf(sub,oldIndex);
+                if(index > 0) {
+                    buf.append(content, oldIndex, index);
+                    oldIndex = index+slen;
+                }else {
+                    buf.append(content, oldIndex, content.length());
+                }
+            }
+            content = buf.toString();
+        }
+        return content;
+    }
+
+    public static String getLevelFromScore(Double score) {
+        if(score == null)
+            return "";
+        if(score >=89.5)
+            return "优";
+        if(score >=79.5)
+            return "良";
+        if(score >=69.5)
+            return "中";
+        if(score >=59.5)
+            return "及格";
+        return "不及格";
+    }
+    public static ResponseEntity<StreamingResponseBody> getByteDataResponseBodyPdf(byte[] data) {
+        if (data == null || data.length == 0)
+            return ResponseEntity.internalServerError().build();
+        try {
+            StreamingResponseBody stream = outputStream -> outputStream.write(data);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(stream);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 

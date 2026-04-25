@@ -29,6 +29,17 @@ public class SecurityConfiguration {
         this.authenticationProvider = authenticationProvider;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(request -> {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOrigins(List.of("*"));
+                configuration.setAllowedMethods(List.of("*"));
+                configuration.setAllowedHeaders(List.of("*"));
+                return configuration;
+            }))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/auth/login", "/auth/getValidateCode", "/auth/testValidateInfo", "/auth/generatePassword").permitAll()
                 .requestMatchers("/api/**").authenticated()

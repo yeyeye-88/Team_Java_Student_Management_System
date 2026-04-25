@@ -343,8 +343,10 @@ public class StudentService {
         if (sList == null || sList.isEmpty())
             return list;
         Map<String,Object> m;
+        Course c;
         for (Score s : sList) {
-            if (s.getMark() >= 90)
+            m = new HashMap<>();
+            c = s.getCourse();
                 count[0]++;
             else if (s.getMark() >= 80)
                 count[1]++;
