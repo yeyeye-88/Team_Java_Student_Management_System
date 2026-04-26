@@ -14,6 +14,7 @@ import java.util.List;
 @Repository
 public interface ScoreRepository extends JpaRepository<Score,Integer> {
     List<Score> findByStudentPersonId(Integer personId);
+    
     @Query(value="from Score where (?1=0 or student.personId=?1) and (?2=0 or course.courseId=?2)" )
     List<Score> findByStudentCourse(Integer personId, Integer courseId);
 
@@ -23,4 +24,10 @@ public interface ScoreRepository extends JpaRepository<Score,Integer> {
     @Query(value="select s.student.personId, count(s.scoreId), sum(s.mark),sum(s.course.credit),sum(s.course.credit* s.mark) from Score s where s.student.personId in ?1 group by s.student.personId" )
     List<?> getStudentStatisticsList(List<Integer> personId);
 
+    // 按课程 ID 查询所有成绩
+    List<Score> findByCourseCourseId(Integer courseId);
+
+    // 按课程名称模糊查询所有成绩
+    @Query(value="from Score where course.name like %?1%")
+    List<Score> findByCourseName(String courseName);
 }

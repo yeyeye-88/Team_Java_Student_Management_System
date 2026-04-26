@@ -62,11 +62,17 @@ public class ScoreService {
 
             List<Score> scoreList;
             if (courseId != null && courseId > 0) {
-                scoreList = scoreRepository.findByStudentCourse(personId, courseId);
+                // 按课程查询所有成绩
+                scoreList = scoreRepository.findByCourseCourseId(courseId);
             } else if (courseName != null && !courseName.isEmpty()) {
-                scoreList = scoreRepository.findByStudentCourse(personId, courseName);
-            } else {
+                // 按课程名称模糊查询所有成绩
+                scoreList = scoreRepository.findByCourseName(courseName);
+            } else if (personId != null && personId > 0) {
+                // 按学生 ID 查询
                 scoreList = scoreRepository.findByStudentPersonId(personId);
+            } else {
+                // 管理员/教师查询所有成绩
+                scoreList = scoreRepository.findAll();
             }
 
             return CommonMethod.getReturnData(getScoreMapList(scoreList));
