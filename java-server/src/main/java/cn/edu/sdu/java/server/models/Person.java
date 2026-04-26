@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 
 /*
  * Person人员表实体类 保存人员的基本信息信息， 账户、学生和教师都关联人员，
@@ -55,8 +57,7 @@ public class Person {
     @Size(max = 2)
     private String gender;
 
-    @Size(max = 10)
-    private String birthday;
+    private LocalDate birthday;
 
     @Size(max = 60)
     @Email
@@ -73,6 +74,6 @@ public class Person {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(name=" photo", columnDefinition="longblob", nullable=true)
+    @Column(name="photo", columnDefinition="longblob", nullable=true)
     private byte[] photo;
 }

@@ -43,125 +43,41 @@ public class CommonMethod {
     }
 
     /**
-     * Integer getUserId() 获得用户的userId 该static 方法可以在任何的Controller和Service中使用，可以获得当前登录用户的用户ID，可以通过在Web请求服务中使用该方法获取当前请求客户的信息
-     * @return
+     * Integer getPersonId() 获得用户的personId 该static 方法可以在任何的Controller和Service中使用，可以获得当前登录用户的用户ID，可以通过在Web请求服务中使用该方法获取当前请求客户的信息
+     * @return 当前登录用户的Person ID，如果未登录或测试环境则返回 null
      */
     public static Integer getPersonId(){
-        Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(!(obj instanceof UserDetailsImpl userDetails))
+        try {
+            Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if(!(obj instanceof UserDetailsImpl userDetails))
+                return null;
+            return userDetails.getId();
+        } catch (Exception e) {
+            // 测试环境或未登录时返回 null
             return null;
-        return userDetails.getId();
+        }
     }
     public static String getUsername(){
-        Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(!(obj instanceof UserDetailsImpl userDetails))
+        try {
+            Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if(!(obj instanceof UserDetailsImpl userDetails))
+                return null;
+            return userDetails.getUsername();
+        } catch (Exception e) {
+            // 测试环境或未登录时返回 null
             return null;
-        return userDetails.getUsername();
+        }
     }
     public static String getRoleName(){
-        Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(!(obj instanceof UserDetailsImpl userDetails))
+        try {
+            Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if(!(obj instanceof UserDetailsImpl userDetails))
+                return null;
+            return  userDetails.getAuthorities().iterator().next().toString();
+        } catch (Exception e) {
+            // 测试环境或未登录时返回 null
             return null;
-        return  userDetails.getAuthorities().iterator().next().toString();
-    }
-
-    public static String getNextNum2(String num) {
-        String str;
-        String prefix;
-        if(num.length() == 2) {
-            str = num;
-            prefix= "";
         }
-        else {
-            str = num.substring(num.length() - 2);
-            prefix = num.substring(0,num.length() - 2);
-        }
-        int c;
-        if(str.charAt(0)=='0') {
-            c = str.charAt(1)-'0';
-        }else {
-            c = (str.charAt(0)-'0')*10 + str.charAt(1)-'0';
-        }
-        c++;
-        if(c < 10) {
-            return prefix+"0" + c;
-        }else {
-            return prefix+ c;
-        }
-    }
-    public static String getNextNum3( String num) {
-        String str;
-        String prefix;
-        if(num.length() == 3) {
-            str = num;
-            prefix= "";
-        }
-        else {
-            str = num.substring(num.length() - 3);
-            prefix = num.substring(0,num.length() - 3);
-        }
-        int c;
-        if(str.charAt(0)=='0') {
-            if(str.charAt(1)=='0') {
-                c = str.charAt(2)-'0';
-            }else {
-                c = (str.charAt(1)-'0')*10 + str.charAt(2)-'0';
-            }
-        }else {
-            c = (str.charAt(0)-'0')*100  +(str.charAt(1)-'0')*10 + str.charAt(2)-'0';
-        }
-        c++;
-        if(c < 10) {
-            return prefix+"00" + c;
-        }else if(c < 100) {
-            return prefix+"0" + c;
-        }else {
-            return prefix+ c;
-        }
-    }
-    public static String getNextNum4( String num) {
-        String str;
-        String prefix;
-        if(num.length() == 4) {
-            str = num;
-            prefix= "";
-        }
-        else {
-            str = num.substring(num.length() - 4);
-            prefix = num.substring(0,num.length() - 4);
-        }
-        int c;
-        if(str.charAt(0)=='0') {
-            if (str.charAt(1) == '0') {
-                if (str.charAt(2) == '0') {
-                    c = str.charAt(3) - '0';
-                } else {
-                    c = (str.charAt(2) - '0') * 10 + str.charAt(3) - '0';
-                }
-            } else {
-                c = (str.charAt(1) - '0') * 100 + (str.charAt(2) - '0') * 10 + str.charAt(3) - '0';
-            }
-        }else {
-            c = (str.charAt(0) - '0') * 1000 + (str.charAt(1) - '0') * 100 + (str.charAt(2) - '0') * 10 + str.charAt(3) - '0';
-        }
-        c++;
-        if(c < 10) {
-            return prefix+"000" + c;
-        }else if(c < 100) {
-            return prefix+"00" + c;
-        }else if(c < 1000){
-            return prefix + "0" + c;
-        }else {
-            return prefix+ c;
-        }
-    }
-    public static String[] getStrings(Map<String,Object> data,String key){
-        Object obj = data.get(key);
-        if(obj == null)
-            return new String[]{};
-        if(obj instanceof String[])
-            return (String[])obj;
-        return new String[]{};
     }
 
     public static String getString(Map<String,Object> data,String key){
@@ -252,6 +168,7 @@ public class CommonMethod {
             return null;
         }
     }
+
     public static Double getDouble0(Map<String,Object> data,String key) {
         Double d0 = 0d;
         Object obj = data.get(key);
@@ -361,9 +278,7 @@ public class CommonMethod {
         if (data == null || data.length == 0)
             return ResponseEntity.internalServerError().build();
         try {
-            StreamingResponseBody stream = outputStream -> {
-                outputStream.write(data);
-            };
+            StreamingResponseBody stream = outputStream -> outputStream.write(data);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(stream);
@@ -371,17 +286,16 @@ public class CommonMethod {
             return ResponseEntity.internalServerError().build();
         }
     }
+
     public static Double getDouble2(Double f) {
         if (f == null)
             return 0d;
         BigDecimal bg = new BigDecimal(f);
-        return bg.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return bg.setScale(2, java.math.RoundingMode.HALF_UP).doubleValue();
     }
     public static String ObjectToJSon(Object o){
         try {
-            //p是指定要转换的对象
-            String json = mapper.writeValueAsString(o);
-            return json;
+            return mapper.writeValueAsString(o);
         }catch(Exception e){
             return "";
         }

@@ -134,6 +134,75 @@ public class UserService {
             return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 根据账号查询用户（按账号查用户）
+     */
+    public DataResponse findByUserName(String userName) {
+        try {
+            Optional<User> op = userRepository.findByUserName(userName);
+            if (op.isPresent()) {
+                User u = op.get();
+                Map<String, Object> m = new HashMap<>();
+                m.put("personId", u.getPersonId());
+                m.put("userName", u.getUserName());
+                m.put("userTypeName", u.getUserType() != null ? u.getUserType().getName() : "未知角色");
+                m.put("loginCount", u.getLoginCount());
+                m.put("lastLoginTime", u.getLastLoginTime());
+                return CommonMethod.getReturnData(m);
+            } else {
+                return CommonMethod.getReturnMessageError("用户不存在！");
+            }
+        } catch (Exception e) {
+            log.error("查询用户失败", e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据角色名称查询用户列表（按角色查用户）
+     */
+    public DataResponse findByRoleName(String roleName) {
+        try {
+            List<User> uList = userRepository.findAll();
+            List<Map<String, Object>> dataList = new ArrayList<>();
+            for (User u : uList) {
+                if (u.getUserType() != null && u.getUserType().getName().equals(roleName)) {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("personId", u.getPersonId());
+                    m.put("userName", u.getUserName());
+                    m.put("userTypeName", u.getUserType().getName());
+                    m.put("loginCount", u.getLoginCount());
+                    dataList.add(m);
+                }
+            }
+            return CommonMethod.getReturnData(dataList);
+        } catch (Exception e) {
+            log.error("按角色查询用户失败", e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除用户
+     */
+    public DataResponse deleteUser(Integer personId) {
+        try {
+            if (personId == null) {
+                return CommonMethod.getReturnMessageError("用户 ID 不能为空！");
+            }
+            Optional<User> op = userRepository.findById(personId);
+            if (op.isPresent()) {
+                userRepository.deleteById(personId);
+                return CommonMethod.getReturnMessageOK("删除成功！");
+            } else {
+                return CommonMethod.getReturnMessageError("用户不存在！");
+            }
+        } catch (Exception e) {
+            log.error("删除用户失败", e);
+            return CommonMethod.getReturnMessageError("删除失败：" + e.getMessage());
+        }
+    }
 }
 
 

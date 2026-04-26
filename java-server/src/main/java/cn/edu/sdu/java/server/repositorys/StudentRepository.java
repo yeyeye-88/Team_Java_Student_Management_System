@@ -29,4 +29,8 @@ public interface StudentRepository extends JpaRepository<Student,Integer> {
     @Query(value = "from Student where ?1='' or person.num like concat('%', ?1, '%') or person.name like concat('%', ?1, '%')",
             countQuery = "SELECT count(personId) from Student where ?1='' or person.num like concat('%', ?1, '%') or person.name like concat('%', ?1, '%')")
     Page<Student> findStudentPageByNumName(String numName,  Pageable pageable);
+
+    // 第 5 天任务：自定义查询方法
+    List<Student> findByPersonNumLikeOrPersonNameLike(String num, String name);
+    List<Student> findByClassName(String className);
 }

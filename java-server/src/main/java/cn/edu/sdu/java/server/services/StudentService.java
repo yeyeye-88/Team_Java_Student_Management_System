@@ -27,8 +27,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.List;
 
 @Service
 public class StudentService {
@@ -72,7 +73,14 @@ public class StudentService {
         String gender = p.getGender();
         m.put("gender",gender);
         m.put("genderName", ComDataUtil.getInstance().getDictionaryLabelByValue("XBM", gender)); //性别类型的值转换成数据类型名
-        m.put("birthday", p.getBirthday());  //时间格式转换字符串
+        
+        // 修复：将 LocalDate 转换为字符串，避免前端接收异常
+        if (p.getBirthday() != null) {
+            m.put("birthday", p.getBirthday().toString());  // 转换为 "yyyy-MM-dd" 格式字符串
+        } else {
+            m.put("birthday", null);
+        }
+        
         m.put("email",p.getEmail());
         m.put("phone",p.getPhone());
         m.put("address",p.getAddress());
@@ -166,11 +174,12 @@ public class StudentService {
                 return CommonMethod.getReturnMessageError("学生 ID 不能为空！");
             }
 
-            Student s = null;
             Optional<Student> op = studentRepository.findById(personId);
-            if (op.isPresent()) {
-                s = op.get();
+            if (op.isEmpty()) {
+                return CommonMethod.getReturnMessageError("学生不存在！");
             }
+            
+            Student s = op.get();
             return CommonMethod.getReturnData(getMapFromStudent(s));
         } catch (Exception e) {
             log.error("查询学生信息失败，personId: {}", dataRequest.getInteger("personId"), e);
@@ -185,6 +194,7 @@ public class StudentService {
      * @param dataRequest 请求参数，包含 personId（修改时必填）和 form（表单数据 Map）
      * @return 新增时返回新学生的 personId，修改时返回原 personId
      */
+    @Transactional
     public DataResponse studentEditSave(DataRequest dataRequest) {
         try{
             Integer personId = dataRequest.getInteger("personId");
@@ -225,49 +235,76 @@ public class StudentService {
                 }
             }
             if (s == null) {
+                // === 新增学生 ===
                 p = new Person();
                 p.setNum(num);
+                p.setName(name);
                 p.setType("1");
-                personRepository.saveAndFlush(p);  //插入新的Person记录
-                personId = p.getPersonId();
+                p.setDept(CommonMethod.getString(form, "dept"));
+                p.setCard(CommonMethod.getString(form, "card"));
+                p.setGender(CommonMethod.getString(form, "gender"));
+                String birthdayStr = CommonMethod.getString(form, "birthday");
+                if (birthdayStr != null && !birthdayStr.isEmpty()) {
+                    p.setBirthday(LocalDate.parse(birthdayStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                }
+                p.setEmail(CommonMethod.getString(form, "email"));
+                p.setPhone(CommonMethod.getString(form, "phone"));
+                p.setAddress(CommonMethod.getString(form, "address"));
+                personRepository.save(p);  //插入新的Person记录
+                personRepository.flush();  // 立即获取生成的ID
+                
                 String password = encoder.encode("123456");
                 u = new User();
-                u.setPersonId(personId);
+                // 注意：使用@MapsId时，只需设置person对象，JPA会自动设置personId
+                u.setPerson(p);
                 u.setUserName(num);
                 u.setPassword(password);
                 u.setUserType(userTypeRepository.findByName(EUserType.ROLE_STUDENT.name()));
                 u.setCreateTime(DateTimeTool.parseDateTime(new Date()));
                 u.setCreatorId(CommonMethod.getPersonId());
-                userRepository.saveAndFlush(u); //插入新的User记录
+                u.setLoginCount(0);
+                userRepository.save(u); //插入新的User记录
+                
                 s = new Student();   // 创建实体对象
-                s.setPersonId(personId);
-                studentRepository.saveAndFlush(s);  //插入新的Student记录
+                // 注意：使用@MapsId时，只需设置person对象，JPA会自动设置personId
+                s.setPerson(p);
+                s.setMajor(major);
+                s.setClassName(CommonMethod.getString(form, "className"));
+                studentRepository.save(s);  //插入新的Student记录
                 isNew = true;
             } else {
+                // === 修改学生 ===
                 p = s.getPerson();
-            }
-            personId = p.getPersonId();
-            if (!num.equals(p.getNum())) {   //如果人员编号变化，修改人员编号和登录账号
-                Optional<User> uOp = userRepository.findByPersonPersonId(personId);
-                if (uOp.isPresent()) {
-                    u = uOp.get();
-                    u.setUserName(num);
-                    userRepository.saveAndFlush(u);
+                personId = p.getPersonId();
+                
+                if (!num.equals(p.getNum())) {   //如果人员编号变化，修改人员编号和登录账号
+                    Optional<User> uOp = userRepository.findByPersonPersonId(personId);
+                    if (uOp.isPresent()) {
+                        u = uOp.get();
+                        u.setUserName(num);
+                        userRepository.saveAndFlush(u);
+                    }
+                    p.setNum(num);  //设置属性
                 }
-                p.setNum(num);  //设置属性
+                p.setName(name);
+                p.setDept(CommonMethod.getString(form, "dept"));
+                p.setCard(CommonMethod.getString(form, "card"));
+                p.setGender(CommonMethod.getString(form, "gender"));
+                String birthdayStr = CommonMethod.getString(form, "birthday");
+                if (birthdayStr != null && !birthdayStr.isEmpty()) {
+                    p.setBirthday(LocalDate.parse(birthdayStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                } else {
+                    p.setBirthday(null);
+                }
+                p.setEmail(CommonMethod.getString(form, "email"));
+                p.setPhone(CommonMethod.getString(form, "phone"));
+                p.setAddress(CommonMethod.getString(form, "address"));
+                personRepository.save(p);  // 修改保存人员信息
+                
+                s.setMajor(major);
+                s.setClassName(CommonMethod.getString(form, "className"));
+                studentRepository.save(s);  //修改保存学生信息
             }
-            p.setName(name);
-            p.setDept(CommonMethod.getString(form, "dept"));
-            p.setCard(CommonMethod.getString(form, "card"));
-            p.setGender(CommonMethod.getString(form, "gender"));
-            p.setBirthday(CommonMethod.getString(form, "birthday"));
-            p.setEmail(CommonMethod.getString(form, "email"));
-            p.setPhone(CommonMethod.getString(form, "phone"));
-            p.setAddress(CommonMethod.getString(form, "address"));
-            personRepository.save(p);  // 修改保存人员信息
-            s.setMajor(major);
-            s.setClassName(CommonMethod.getString(form, "className"));
-            studentRepository.save(s);  //修改保存学生信息
             systemService.modifyLog(s,isNew);
             return CommonMethod.getReturnData(s.getPersonId());  // 将personId返回前端
         }catch (Exception e){
@@ -336,7 +373,6 @@ public class StudentService {
         if (sList == null || sList.isEmpty())
             return list;
         Map<String,Object> m;
-        Course c;
         for (Fee s : sList) {
             m = new HashMap<>();
             m.put("title", s.getDay());
@@ -351,14 +387,13 @@ public class StudentService {
 
     public String importFeeData(Integer personId, InputStream in){
         try {
-            Student student = studentRepository.findById(personId).get();
+            Student student = studentRepository.findById(personId).orElse(null);
+            if (student == null) return "学生不存在！";
             XSSFWorkbook workbook = new XSSFWorkbook(in);  //打开Excl数据流
             XSSFSheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.iterator();
             Row row;
             Cell cell;
-            int i;
-            i = 1;
             String day, money;
             Optional<Fee> fOp;
             double dMoney;
@@ -411,20 +446,19 @@ public class StudentService {
         String numName = dataRequest.getString("numName");
         List<Map<String,Object>> list = getStudentMapList(numName);
         Integer[] widths = {8, 20, 10, 15, 15, 15, 25, 10, 15, 30, 20, 30};
-        int i, j, k;
+        int i, j;
         String[] titles = {"序号", "学号", "姓名", "学院", "专业", "班级", "证件号码", "性别", "出生日期", "邮箱", "电话", "地址"};
         String outPutSheetName = "student.xlsx";
         XSSFWorkbook wb = new XSSFWorkbook();
-        XSSFCellStyle styleTitle = CommonMethod.createCellStyle(wb, 20);
         XSSFSheet sheet = wb.createSheet(outPutSheetName);
         for (j = 0; j < widths.length; j++) {
             sheet.setColumnWidth(j, widths[j] * 256);
         }
         //合并第一行
         XSSFCellStyle style = CommonMethod.createCellStyle(wb, 11);
-        XSSFRow row = null;
+        XSSFRow row;
         XSSFCell[] cell = new XSSFCell[widths.length];
-        row = sheet.createRow((int) 0);
+        row = sheet.createRow(0);
         for (j = 0; j < widths.length; j++) {
             cell[j] = row.createCell(j);
             cell[j].setCellStyle(style);
@@ -448,7 +482,8 @@ public class StudentService {
                 cell[5].setCellValue(CommonMethod.getString(m, "className"));
                 cell[6].setCellValue(CommonMethod.getString(m, "card"));
                 cell[7].setCellValue(CommonMethod.getString(m, "genderName"));
-                cell[8].setCellValue(CommonMethod.getString(m, "birthday"));
+                LocalDate birthday = (LocalDate) m.get("birthday");
+                cell[8].setCellValue(birthday != null ? birthday.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "");
                 cell[9].setCellValue(CommonMethod.getString(m, "email"));
                 cell[10].setCellValue(CommonMethod.getString(m, "phone"));
                 cell[11].setCellValue(CommonMethod.getString(m, "address"));
@@ -479,9 +514,8 @@ public class StudentService {
             int dataTotal = 0;
             int size = 40;
             List<Map<String,Object>> dataList = new ArrayList<>();
-            Page<Student> page = null;
             Pageable pageable = PageRequest.of(cPage, size);
-            page = studentRepository.findStudentPageByNumName(numName, pageable);
+            Page<Student> page = studentRepository.findStudentPageByNumName(numName, pageable);
             Map<String,Object> m;
             if (page != null) {
                 dataTotal = (int) page.getTotalElements();
@@ -550,8 +584,12 @@ public class StudentService {
             }
             if(f== null) {
                 f = new FamilyMember();
-                assert personId != null;
-                f.setStudent(studentRepository.findById(personId).get());
+                Optional<Student> studentOp = studentRepository.findById(personId);
+                if (studentOp.isPresent()) {
+                    f.setStudent(studentOp.get());
+                } else {
+                    return CommonMethod.getReturnMessageError("学生不存在！");
+                }
             }
             f.setRelation(CommonMethod.getString(form,"relation"));
             f.setName(CommonMethod.getString(form,"name"));
