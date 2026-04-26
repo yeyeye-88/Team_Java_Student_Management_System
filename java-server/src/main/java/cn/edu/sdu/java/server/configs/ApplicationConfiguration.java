@@ -7,7 +7,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 
 @Configuration
@@ -19,8 +20,9 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    PasswordEncoder passwordEncoder() {
+        // 使用 DelegatingPasswordEncoder 支持多种密码编码格式，包括 {noop}
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
