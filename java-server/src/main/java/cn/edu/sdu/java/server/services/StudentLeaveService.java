@@ -101,7 +101,10 @@ public class StudentLeaveService {
             sl.setApplyTime(new Date());
             sl.setTeacherComment("");
             sl.setAdminComment("");
-            sl.setStudent(studentRepository.findByPersonNum(CommonMethod.getUsername()).get());
+            Optional<Student> studentOpt = studentRepository.findByPersonNum(CommonMethod.getUsername());
+            if(studentOpt.isPresent()) {
+                sl.setStudent(studentOpt.get());
+            }
         }
         if(teacherId != null && teacherId > 0) {
             Optional<Teacher> op = teacherRepository.findById(teacherId);
