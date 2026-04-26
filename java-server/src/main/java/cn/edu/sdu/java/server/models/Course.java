@@ -20,6 +20,12 @@ import lombok.Setter;
 @Entity
 @Table(	name = "course",
         uniqueConstraints = {
+                @UniqueConstraint(columnNames = "num")
+        },
+        indexes = {
+                @Index(name = "idx_course_num", columnList = "num"),
+                @Index(name = "idx_course_name", columnList = "name"),
+                @Index(name = "idx_course_pre_course_id", columnList = "pre_course_id")
         })
 public class Course  {
     @Id

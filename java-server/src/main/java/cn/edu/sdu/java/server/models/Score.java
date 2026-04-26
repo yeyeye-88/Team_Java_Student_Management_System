@@ -16,6 +16,11 @@ import lombok.Setter;
 @Entity
 @Table(	name = "score",
         uniqueConstraints = {
+        },
+        indexes = {
+                @Index(name = "idx_score_person_id", columnList = "person_id"),
+                @Index(name = "idx_score_course_id", columnList = "course_id"),
+                @Index(name = "idx_score_mark", columnList = "mark")
         })
 public class Score {
     @Id
