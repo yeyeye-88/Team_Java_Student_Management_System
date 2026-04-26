@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.List;
 
 @Service
 public class StudentService {
@@ -345,8 +344,8 @@ public class StudentService {
         Map<String,Object> m;
         Course c;
         for (Score s : sList) {
-            m = new HashMap<>();
             c = s.getCourse();
+            if (s.getMark() >= 90)
                 count[0]++;
             else if (s.getMark() >= 80)
                 count[1]++;

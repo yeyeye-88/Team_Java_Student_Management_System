@@ -1,6 +1,5 @@
 package cn.edu.sdu.java.server.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -9,15 +8,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(	name = "teacher",
-        uniqueConstraints = {
-        })
+@Table(name = "teacher")
 public class Teacher {
     @Id
     private Integer personId;
 
     @OneToOne
-    @JoinColumn(name="personId")
+    @MapsId
+    @JoinColumn(name = "person_id")
     private Person person;
 
     @Size(max = 20)
@@ -25,5 +23,4 @@ public class Teacher {
 
     @Size(max = 10)
     private String degree;
-
 }
