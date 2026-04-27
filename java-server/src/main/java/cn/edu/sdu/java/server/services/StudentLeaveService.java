@@ -45,13 +45,16 @@ public class StudentLeaveService {
         if(state == null)
             state = -1;
         String search = dataRequest.getString("search");
+        if(search == null) search = "";
         assert roleName != null;
+        
         List<StudentLeave> slList = switch (roleName) {
             case "ROLE_STUDENT" -> studentLeaveRepository.getStudentLeaveList(-1, search, userName, "");
             case "ROLE_TEACHER" -> studentLeaveRepository.getStudentLeaveList(-1, search, "", userName);
             case "ROLE_ADMIN" -> studentLeaveRepository.getStudentLeaveList(state, search, "", "");
             default -> null;
         };
+        
         List<Map<String, Object>> dataList = new ArrayList<>();
         Map<String, Object> map;
         Student s;
@@ -98,7 +101,10 @@ public class StudentLeaveService {
             sl.setApplyTime(new Date());
             sl.setTeacherComment("");
             sl.setAdminComment("");
-            sl.setStudent(studentRepository.findByPersonNum(CommonMethod.getUsername()).get());
+            Optional<Student> studentOpt = studentRepository.findByPersonNum(CommonMethod.getUsername());
+            if(studentOpt.isPresent()) {
+                sl.setStudent(studentOpt.get());
+            }
         }
         if(teacherId != null && teacherId > 0) {
             Optional<Teacher> op = teacherRepository.findById(teacherId);
