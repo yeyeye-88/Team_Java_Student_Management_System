@@ -309,7 +309,8 @@ public class StudentService {
             return CommonMethod.getReturnData(s.getPersonId());  // 将personId返回前端
         }catch (Exception e){
             log.error("保存学生信息失败", e);
-            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
+            // 必须抛出 RuntimeException 才能触发事务回滚，否则会导致 UnexpectedRollbackException
+            throw new RuntimeException("保存失败：" + e.getMessage());
         }
     }
 

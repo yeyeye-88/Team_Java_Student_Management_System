@@ -42,7 +42,7 @@ public class User {
 
 
     @NotBlank
-    @Size(max = 60)
+    @Size(max = 100)
     private String password;
 
     private Integer loginCount;

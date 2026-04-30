@@ -42,11 +42,12 @@ public class CourseService {
 
     public DataResponse courseSave(DataRequest dataRequest) {
         Integer courseId = dataRequest.getInteger("courseId");
-        String num = dataRequest.getString("num");
-        String name = dataRequest.getString("name");
-        String coursePath = dataRequest.getString("coursePath");
-        Integer credit = dataRequest.getInteger("credit");
-        Integer preCourseId = dataRequest.getInteger("preCourseId");
+        Map<String, Object> form = dataRequest.getMap("form");
+        String num = CommonMethod.getString(form, "num");
+        String name = CommonMethod.getString(form, "name");
+        String coursePath = CommonMethod.getString(form, "coursePath");
+        Integer credit = CommonMethod.getInteger(form, "credit");
+        Integer preCourseId = CommonMethod.getInteger(form, "preCourseId");
         Optional<Course> op;
         Course c= null;
 
