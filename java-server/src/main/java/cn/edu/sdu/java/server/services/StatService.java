@@ -1,11 +1,7 @@
 package cn.edu.sdu.java.server.services;
 
 import cn.edu.sdu.java.server.payload.response.DataResponse;
-import cn.edu.sdu.java.server.repositorys.AttendanceRepository;
-import cn.edu.sdu.java.server.repositorys.CourseRepository;
-import cn.edu.sdu.java.server.repositorys.ScoreRepository;
-import cn.edu.sdu.java.server.repositorys.StudentLeaveRepository;
-import cn.edu.sdu.java.server.repositorys.StudentRepository;
+import cn.edu.sdu.java.server.repositorys.*;
 import cn.edu.sdu.java.server.util.CommonMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,17 +21,20 @@ public class StatService {
     private final AttendanceRepository attendanceRepository;
     private final StudentLeaveRepository studentLeaveRepository;
     private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
     public StatService(StudentRepository studentRepository,
                        ScoreRepository scoreRepository,
                        AttendanceRepository attendanceRepository,
                        StudentLeaveRepository studentLeaveRepository,
-                       CourseRepository courseRepository) {
+                       CourseRepository courseRepository,
+                       UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.scoreRepository = scoreRepository;
         this.attendanceRepository = attendanceRepository;
         this.studentLeaveRepository = studentLeaveRepository;
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -143,6 +142,46 @@ public class StatService {
             return CommonMethod.getReturnData(data);
         } catch (Exception e) {
             log.error("查询请假通过率统计失败", e);
+            throw new RuntimeException("统计失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取仪表盘汇总数据
+     * @return 包含总学生数、总课程数、待审批请假数的 Map
+     */
+    public DataResponse getDashboardData() {
+        try {
+            Map<String, Object> dashboard = new HashMap<>();
+            
+            // 1. 总学生数
+            dashboard.put("totalStudents", studentRepository.count());
+            
+            // 2. 总课程数
+            dashboard.put("totalCourses", courseRepository.count());
+            
+            // 3. 待审批请假数 (state=0)
+            long pendingLeaves = studentLeaveRepository.findAll().stream()
+                    .filter(leave -> leave.getState() != null && leave.getState() == 0)
+                    .count();
+            dashboard.put("pendingLeaves", pendingLeaves);
+            
+            // 4. 平均出勤率 (简化计算，取所有课程的平均值)
+            List<Object[]> attendanceRates = attendanceRepository.getAttendanceRateByCourse();
+            double avgRate = 0.0;
+            if (!attendanceRates.isEmpty()) {
+                double sum = 0.0;
+                for (Object[] row : attendanceRates) {
+                    sum += (Double) row[1];
+                }
+                avgRate = Math.round((sum / attendanceRates.size()) * 100.0) / 100.0;
+            }
+            dashboard.put("avgAttendanceRate", avgRate);
+            
+            log.info("查询仪表盘汇总数据成功");
+            return CommonMethod.getReturnData(dashboard);
+        } catch (Exception e) {
+            log.error("查询仪表盘汇总数据失败", e);
             throw new RuntimeException("统计失败：" + e.getMessage());
         }
     }

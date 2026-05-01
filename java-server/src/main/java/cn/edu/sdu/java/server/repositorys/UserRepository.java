@@ -30,4 +30,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Integer countLastLoginTime(String date);
     @Query(value = "select userType.id, count(personId) from User group by userType.id" )
     List<?> getCountList();
+
+    // 第 7 周任务：统计功能 - 统计总用户数
+    long count();
 }

@@ -19,4 +19,7 @@ public interface CourseRepository extends JpaRepository<Course,Integer> {
 
     Optional<Course> findByNum(String num);
     List<Course> findByName(String name);
+
+    // 第 7 周任务：统计功能 - 统计总课程数
+    long count();
 }

@@ -54,4 +54,13 @@ public class StatController {
     public DataResponse getLeavePassRate() {
         return statService.getLeavePassRate();
     }
+
+    /**
+     * 获取仪表盘汇总数据
+     * @return 核心统计数据汇总
+     */
+    @PostMapping("/dashboard")
+    public DataResponse getDashboard() {
+        return statService.getDashboardData();
+    }
 }
