@@ -28,4 +28,7 @@ public class Fee {
     private String day;
     private Double money;
 
+    // 消费类型：1=学费缴纳，2=校园卡消费
+    private Integer type;
+
 }

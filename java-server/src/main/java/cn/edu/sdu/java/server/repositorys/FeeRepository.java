@@ -22,4 +22,16 @@ public interface FeeRepository extends JpaRepository<Fee,Integer> {
     @Query(value = "select sum(money) from Fee where student.personId=?1 and day like ?2%")
     Double getMoneyByPersonIdAndDate(Integer personId,String date);
 
+    // 按月份统计某学生的总消费
+    @Query("SELECT SUM(f.money) FROM Fee f WHERE f.student.personId = ?1 AND f.day LIKE ?2%")
+    Double getMonthlyTotalByPersonId(Integer personId, String month);
+
+    // 查询某月份所有学生的消费记录
+    @Query("SELECT f FROM Fee f WHERE f.day LIKE ?1% ORDER BY f.day")
+    List<Fee> findByMonth(String month);
+
+    // 查询某学生某天的消费总额（用于异常检测）
+    @Query("SELECT SUM(f.money) FROM Fee f WHERE f.student.personId = ?1 AND f.day = ?2")
+    Double getDailyTotalByPersonId(Integer personId, String day);
+
 }
