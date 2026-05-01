@@ -115,11 +115,12 @@ public class StudentLeaveService {
             studentLeave.setApplyTime(new Date());
 
             studentLeaveRepository.save(studentLeave);
+            log.info("请假申请提交成功，leaveId: {}, 操作人: {}", studentLeave.getStudentLeaveId(), CommonMethod.getPersonId());
 
             return CommonMethod.getReturnData(studentLeave.getStudentLeaveId());
         } catch (Exception e) {
             log.error("提交请假申请失败", e);
-            return CommonMethod.getReturnMessageError("提交失败：" + e.getMessage());
+            throw new RuntimeException("提交失败：" + e.getMessage());
         }
     }
 
@@ -165,11 +166,12 @@ public class StudentLeaveService {
             studentLeave.setTeacherTime(new Date());
 
             studentLeaveRepository.save(studentLeave);
+            log.info("请假审批成功，leaveId: {}, 状态: {}, 操作人: {}", studentLeaveId, state, CommonMethod.getPersonId());
 
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
             log.error("审批请假失败", e);
-            return CommonMethod.getReturnMessageError("审批失败：" + e.getMessage());
+            throw new RuntimeException("审批失败：" + e.getMessage());
         }
     }
 

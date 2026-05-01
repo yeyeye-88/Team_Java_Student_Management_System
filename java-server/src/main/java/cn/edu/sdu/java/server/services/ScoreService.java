@@ -139,11 +139,12 @@ public class ScoreService {
 
             score.setMark(mark);
             scoreRepository.save(score);
+            log.info("成绩保存成功，scoreId: {}, 操作人: {}", score.getScoreId(), CommonMethod.getPersonId());
 
             return CommonMethod.getReturnData(score.getScoreId());
         } catch (Exception e) {
             log.error("保存成绩失败", e);
-            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
+            throw new RuntimeException("保存失败：" + e.getMessage());
         }
     }
 
@@ -164,10 +165,11 @@ public class ScoreService {
             }
 
             scoreRepository.deleteById(scoreId);
+            log.info("成绩删除成功，scoreId: {}, 操作人: {}", scoreId, CommonMethod.getPersonId());
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
-            log.error("删除成绩失败，scoreId: {}", dataRequest.getInteger("scoreId"), e);
-            return CommonMethod.getReturnMessageError("删除失败：" + e.getMessage());
+            log.error("删除成绩失败", e);
+            throw new RuntimeException("删除失败：" + e.getMessage());
         }
     }
 

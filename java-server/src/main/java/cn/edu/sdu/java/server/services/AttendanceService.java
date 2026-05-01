@@ -133,11 +133,11 @@ public class AttendanceService {
             attendance.setRemark(remark != null ? remark : "");
 
             attendanceRepository.save(attendance);
-
+            log.info("考勤保存成功，attendanceId: {}, 操作人: {}", attendance.getAttendanceId(), CommonMethod.getPersonId());
             return CommonMethod.getReturnData(attendance.getAttendanceId());
         } catch (Exception e) {
             log.error("保存考勤失败", e);
-            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
+            throw new RuntimeException("保存失败：" + e.getMessage());
         }
     }
 
@@ -157,10 +157,11 @@ public class AttendanceService {
             }
 
             attendanceRepository.deleteById(attendanceId);
+            log.info("考勤删除成功，attendanceId: {}, 操作人: {}", attendanceId, CommonMethod.getPersonId());
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
             log.error("删除考勤失败", e);
-            return CommonMethod.getReturnMessageError("删除失败：" + e.getMessage());
+            throw new RuntimeException("删除失败：" + e.getMessage());
         }
     }
 
