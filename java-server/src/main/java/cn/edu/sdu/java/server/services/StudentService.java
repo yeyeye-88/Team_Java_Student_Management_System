@@ -154,11 +154,12 @@ public class StudentService {
             userRepository.deleteById(personId);
             studentRepository.deleteById(personId);
             personRepository.deleteById(personId);
+            log.info("删除学生成功，personId: {}, 操作人: {}", personId, CommonMethod.getPersonId());
     
             return CommonMethod.getReturnMessageOK();
         } catch(Exception e){
-            log.error("删除学生失败，personId: {}", dataRequest.getInteger("personId"), e);
-            return CommonMethod.getReturnMessageError("删除学生失败：" + e.getMessage());
+            log.error("删除学生失败", e);
+            throw new RuntimeException("删除学生失败：" + e.getMessage());
         }
     }
 
@@ -306,6 +307,7 @@ public class StudentService {
                 studentRepository.save(s);  //修改保存学生信息
             }
             systemService.modifyLog(s,isNew);
+            log.info("学生信息保存成功，personId: {}, 操作人: {}", s.getPersonId(), CommonMethod.getPersonId());
             return CommonMethod.getReturnData(s.getPersonId());  // 将personId返回前端
         }catch (Exception e){
             log.error("保存学生信息失败", e);
@@ -598,10 +600,11 @@ public class StudentService {
             f.setAge(CommonMethod.getInteger(form,"age"));
             f.setUnit(CommonMethod.getString(form,"unit"));
             familyMemberRepository.save(f);
+            log.info("家庭成员保存成功，memberId: {}, 操作人: {}", f.getMemberId(), CommonMethod.getPersonId());
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
             log.error("保存家庭成员失败", e);
-            return CommonMethod.getReturnMessageError("保存失败：" + e.getMessage());
+            throw new RuntimeException("保存失败：" + e.getMessage());
         }
     }
 
@@ -611,10 +614,11 @@ public class StudentService {
             Optional<FamilyMember> op;
             op = familyMemberRepository.findById(memberId);
             op.ifPresent(familyMemberRepository::delete);
+            log.info("家庭成员删除成功，memberId: {}, 操作人: {}", memberId, CommonMethod.getPersonId());
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
             log.error("删除家庭成员失败", e);
-            return CommonMethod.getReturnMessageError("删除失败：" + e.getMessage());
+            throw new RuntimeException("删除失败：" + e.getMessage());
         }
     }
 
