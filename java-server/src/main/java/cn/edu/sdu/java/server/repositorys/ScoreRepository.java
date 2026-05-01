@@ -30,4 +30,8 @@ public interface ScoreRepository extends JpaRepository<Score,Integer> {
     // 按课程名称模糊查询所有成绩
     @Query(value="from Score where course.name like %?1%")
     List<Score> findByCourseName(String courseName);
+
+    // 第 7 周任务：统计功能 - 按课程统计平均分
+    @Query("SELECT s.course.courseId, AVG(s.mark) FROM Score s GROUP BY s.course.courseId")
+    List<Object[]> getAverageScoreByCourse();
 }

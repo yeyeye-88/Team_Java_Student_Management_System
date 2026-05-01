@@ -33,4 +33,8 @@ public interface StudentRepository extends JpaRepository<Student,Integer> {
     // 第 5 天任务：自定义查询方法
     List<Student> findByPersonNumLikeOrPersonNameLike(String num, String name);
     List<Student> findByClassName(String className);
+
+    // 第 7 周任务：统计功能 - 按班级统计学生数
+    @Query("SELECT s.className, COUNT(s.personId) FROM Student s GROUP BY s.className")
+    List<Object[]> countStudentsByClass();
 }

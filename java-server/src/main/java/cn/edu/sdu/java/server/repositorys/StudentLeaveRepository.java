@@ -20,4 +20,9 @@ public interface StudentLeaveRepository extends JpaRepository<StudentLeave,Integ
 
     @Query(value="select s.student.personId, count(s.studentLeaveId) from StudentLeave s where s.student.personId in ?1 group by s.student.personId" )
     List<?> getStudentStatisticsList(List<Integer> personId);
+
+    // 第 7 周任务：统计功能 - 统计请假通过率（state=1 表示通过）
+    @Query("SELECT SUM(CASE WHEN sl.state = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(sl.studentLeaveId) " +
+           "FROM StudentLeave sl")
+    Double getLeavePassRate();
 }

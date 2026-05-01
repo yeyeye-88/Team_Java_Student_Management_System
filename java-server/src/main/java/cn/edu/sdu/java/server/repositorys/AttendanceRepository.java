@@ -26,4 +26,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     // 按考勤时间查询（支持日期范围）
     @Query(value = "from Attendance where attendanceTime >= ?1 and attendanceTime <= ?2")
     List<Attendance> findByAttendanceTimeRange(Date startTime, Date endTime);
+
+    // 第 7 周任务：统计功能 - 按课程统计考勤率（state=1 表示出勤）
+    @Query("SELECT a.course.courseId, " +
+           "SUM(CASE WHEN a.state = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(a.attendanceId) " +
+           "FROM Attendance a GROUP BY a.course.courseId")
+    List<Object[]> getAttendanceRateByCourse();
 }
