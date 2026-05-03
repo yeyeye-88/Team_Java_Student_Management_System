@@ -38,4 +38,9 @@ public class StudentLeave {
     @Size(max=100)
     private String adminComment;
     private Date adminTime;
+
+    // 新增字段：请假类型和请假时长
+    @Size(max = 20)
+    private String leaveType;      // 请假类型：病假/事假
+    private Integer leaveDuration; // 请假时长 (小时)
 }
