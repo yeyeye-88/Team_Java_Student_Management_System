@@ -13,6 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * FeeService 消费管理业务逻辑层
@@ -262,6 +266,67 @@ public class FeeService {
         } catch (Exception e) {
             log.error("异常消费检测失败", e);
             throw new RuntimeException("检测失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 分页查询消费账单列表
+     * 权限：管理员可查询所有，学生只能查询自己
+     */
+    public DataResponse getFeeList(Integer personId, Integer type, String month, Integer page, Integer size) {
+        try {
+            // 权限校验：学生只能查自己的账单
+            if (RoleCheckUtil.hasRole("STUDENT")) {
+                Integer currentPersonId = CommonMethod.getPersonId();
+                if (personId != null && !currentPersonId.equals(personId)) {
+                    return CommonMethod.getReturnMessageError("权限不足，只能查询自己的账单！");
+                }
+                personId = currentPersonId; // 强制只能查自己
+            }
+
+            // 构建分页参数
+            Pageable pageable = PageRequest.of(page, size, Sort.by("day").descending());
+
+            // 查询所有记录（后续可根据参数过滤）
+            Page<Fee> feePage = feeRepository.findAll(pageable);
+
+            // 转换为返回格式
+            List<Map<String, Object>> content = new ArrayList<>();
+            for (Fee fee : feePage.getContent()) {
+                // 根据条件过滤
+                if (personId != null && !fee.getStudent().getPersonId().equals(personId)) {
+                    continue;
+                }
+                if (type != null && !fee.getType().equals(type)) {
+                    continue;
+                }
+                if (month != null && !fee.getDay().startsWith(month)) {
+                    continue;
+                }
+
+                Map<String, Object> m = new HashMap<>();
+                m.put("feeId", fee.getFeeId());
+                m.put("personId", fee.getStudent().getPersonId());
+                m.put("studentName", fee.getStudent().getPerson().getName());
+                m.put("day", fee.getDay());
+                m.put("money", fee.getMoney());
+                m.put("type", fee.getType());
+                m.put("typeName", fee.getType() == 1 ? "学费缴纳" : "校园卡消费");
+                content.add(m);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("content", content);
+            result.put("totalElements", feePage.getTotalElements());
+            result.put("totalPages", feePage.getTotalPages());
+            result.put("page", page);
+            result.put("size", size);
+
+            log.info("查询消费账单列表成功，操作人: {}", CommonMethod.getPersonId());
+            return CommonMethod.getReturnData(result);
+        } catch (Exception e) {
+            log.error("查询消费账单列表失败", e);
+            throw new RuntimeException("查询失败：" + e.getMessage());
         }
     }
 }
