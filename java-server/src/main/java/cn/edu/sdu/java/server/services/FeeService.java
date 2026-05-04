@@ -270,11 +270,15 @@ public class FeeService {
     }
 
     /**
-     * 分页查询消费账单列表
+     * 查询消费账单列表
      * 权限：管理员可查询所有，学生只能查询自己
      */
-    public DataResponse getFeeList(Integer personId, Integer type, String month, Integer page, Integer size) {
+    public DataResponse getFeeList(DataRequest dataRequest) {
         try {
+            Integer personId = dataRequest != null ? dataRequest.getInteger("personId") : null;
+            Integer type = dataRequest != null ? dataRequest.getInteger("type") : null;
+            String month = dataRequest != null ? dataRequest.getString("month") : null;
+
             // 权限校验：学生只能查自己的账单
             if (RoleCheckUtil.hasRole("STUDENT")) {
                 Integer currentPersonId = CommonMethod.getPersonId();
@@ -284,25 +288,13 @@ public class FeeService {
                 personId = currentPersonId; // 强制只能查自己
             }
 
-            // 构建分页参数
-            Pageable pageable = PageRequest.of(page, size, Sort.by("day").descending());
-
-            // 查询所有记录（后续可根据参数过滤）
-            Page<Fee> feePage = feeRepository.findAll(pageable);
-
-            // 转换为返回格式
+            List<Fee> fees = feeRepository.findAll();
             List<Map<String, Object>> content = new ArrayList<>();
-            for (Fee fee : feePage.getContent()) {
-                // 根据条件过滤
-                if (personId != null && !fee.getStudent().getPersonId().equals(personId)) {
-                    continue;
-                }
-                if (type != null && !fee.getType().equals(type)) {
-                    continue;
-                }
-                if (month != null && !fee.getDay().startsWith(month)) {
-                    continue;
-                }
+
+            for (Fee fee : fees) {
+                if (personId != null && !fee.getStudent().getPersonId().equals(personId)) continue;
+                if (type != null && !fee.getType().equals(type)) continue;
+                if (month != null && !fee.getDay().startsWith(month)) continue;
 
                 Map<String, Object> m = new HashMap<>();
                 m.put("feeId", fee.getFeeId());
@@ -315,15 +307,7 @@ public class FeeService {
                 content.add(m);
             }
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("content", content);
-            result.put("totalElements", feePage.getTotalElements());
-            result.put("totalPages", feePage.getTotalPages());
-            result.put("page", page);
-            result.put("size", size);
-
-            log.info("查询消费账单列表成功，操作人: {}", CommonMethod.getPersonId());
-            return CommonMethod.getReturnData(result);
+            return CommonMethod.getReturnData(content);
         } catch (Exception e) {
             log.error("查询消费账单列表失败", e);
             throw new RuntimeException("查询失败：" + e.getMessage());

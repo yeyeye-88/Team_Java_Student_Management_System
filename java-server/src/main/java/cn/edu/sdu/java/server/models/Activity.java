@@ -34,6 +34,9 @@ public class Activity {
     // 发布者（关联 person 表）
     private Integer publisherId;
 
+    // 状态：0=未开始，1=进行中，2=已结束，3=已取消
+    private Integer status;
+
     @Column(name = "create_time")
     private Date createTime;
 }

@@ -50,8 +50,17 @@ public class ActivityController {
      */
     @PostMapping("/participation")
     public DataResponse getParticipationList(@RequestBody(required = false) DataRequest dataRequest) {
-        Integer activityId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "activityId") : null;
-        Integer personId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "personId") : null;
+        if (dataRequest == null) return activityService.getParticipationList(null, null);
+        Integer activityId = dataRequest.getInteger("activityId");
+        Integer personId = dataRequest.getInteger("personId");
         return activityService.getParticipationList(activityId, personId);
+    }
+
+    /**
+     * 取消活动
+     */
+    @PostMapping("/cancel")
+    public DataResponse cancelActivity(@Valid @RequestBody DataRequest dataRequest) {
+        return activityService.cancelActivity(dataRequest);
     }
 }

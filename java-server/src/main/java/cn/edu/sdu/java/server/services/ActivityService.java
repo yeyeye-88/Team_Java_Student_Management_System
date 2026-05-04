@@ -188,4 +188,37 @@ public class ActivityService {
             throw new RuntimeException("查询失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 取消活动（管理员或教师）
+     */
+    public DataResponse cancelActivity(DataRequest dataRequest) {
+        try {
+            // 权限校验：管理员或教师
+            if (!RoleCheckUtil.isAdminOrTeacher()) {
+                return CommonMethod.getReturnMessageError("权限不足，只有管理员和教师可以取消活动！");
+            }
+
+            Map<String, Object> form = dataRequest.getMap("form");
+            Integer activityId = CommonMethod.getInteger(form, "activityId");
+
+            String errorMsg = ParamCheckUtil.checkRequired(activityId != null ? activityId.toString() : "", "活动 ID");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            Optional<Activity> activityOpt = activityRepository.findById(activityId);
+            if (activityOpt.isEmpty()) {
+                return CommonMethod.getReturnMessageError("活动不存在！");
+            }
+
+            Activity activity = activityOpt.get();
+            activity.setStatus(3); // 3=已取消
+            activityRepository.save(activity);
+
+            log.info("取消活动成功，activityId: {}, 操作人: {}", activityId, CommonMethod.getPersonId());
+            return CommonMethod.getReturnMessageOK("活动已取消");
+        } catch (Exception e) {
+            log.error("取消活动失败", e);
+            throw new RuntimeException("取消失败：" + e.getMessage());
+        }
+    }
 }

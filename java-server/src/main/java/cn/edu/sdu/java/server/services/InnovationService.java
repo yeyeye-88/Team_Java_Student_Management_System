@@ -205,4 +205,37 @@ public class InnovationService {
             throw new RuntimeException("查询失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 终止项目（管理员或教师）
+     */
+    public DataResponse terminateProject(DataRequest dataRequest) {
+        try {
+            // 权限校验：管理员或教师
+            if (!RoleCheckUtil.isAdminOrTeacher()) {
+                return CommonMethod.getReturnMessageError("权限不足，只有管理员和教师可以终止项目！");
+            }
+
+            Map<String, Object> form = dataRequest.getMap("form");
+            Integer projectId = CommonMethod.getInteger(form, "projectId");
+
+            String errorMsg = ParamCheckUtil.checkRequired(projectId != null ? projectId.toString() : "", "项目 ID");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            Optional<InnovationProject> projectOpt = projectRepository.findById(projectId);
+            if (projectOpt.isEmpty()) {
+                return CommonMethod.getReturnMessageError("项目不存在！");
+            }
+
+            InnovationProject project = projectOpt.get();
+            project.setStatus(2); // 2=已终止
+            projectRepository.save(project);
+
+            log.info("终止项目成功，projectId: {}, 操作人: {}", projectId, CommonMethod.getPersonId());
+            return CommonMethod.getReturnMessageOK("项目已终止");
+        } catch (Exception e) {
+            log.error("终止项目失败", e);
+            throw new RuntimeException("终止失败：" + e.getMessage());
+        }
+    }
 }

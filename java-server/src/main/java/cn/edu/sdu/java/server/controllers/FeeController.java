@@ -66,4 +66,14 @@ public class FeeController {
     public DataResponse detectAbnormalConsumption(@Valid @RequestBody DataRequest dataRequest) {
         return feeService.detectAbnormalConsumption(dataRequest);
     }
+
+    /**
+     * 查询消费账单列表
+     * @param dataRequest 包含 personId, type, month
+     * @return 消费账单列表
+     */
+    @PostMapping("/list")
+    public DataResponse getFeeList(@RequestBody(required = false) DataRequest dataRequest) {
+        return feeService.getFeeList(dataRequest);
+    }
 }
