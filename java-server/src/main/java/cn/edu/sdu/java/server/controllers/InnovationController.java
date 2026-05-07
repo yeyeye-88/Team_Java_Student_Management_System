@@ -51,17 +51,8 @@ public class InnovationController {
      */
     @PostMapping("/achievementList")
     public DataResponse getAchievementList(@RequestBody(required = false) DataRequest dataRequest) {
-        if (dataRequest == null) return innovationService.getAchievementList(null, null);
-        Integer projectId = dataRequest.getInteger("projectId");
-        Integer personId = dataRequest.getInteger("personId");
+        Integer projectId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "projectId") : null;
+        Integer personId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "personId") : null;
         return innovationService.getAchievementList(projectId, personId);
-    }
-
-    /**
-     * 终止项目
-     */
-    @PostMapping("/terminate")
-    public DataResponse terminateProject(@Valid @RequestBody DataRequest dataRequest) {
-        return innovationService.terminateProject(dataRequest);
     }
 }
