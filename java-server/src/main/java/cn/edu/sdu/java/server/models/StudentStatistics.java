@@ -8,6 +8,10 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(	name = "student_statistics",
+		indexes = {
+			@Index(name = "idx_statistics_student", columnList = "personId"),
+			@Index(name = "idx_statistics_year", columnList = "year")
+		},
         uniqueConstraints = {
         })
 public class StudentStatistics implements Comparable<StudentStatistics> {
