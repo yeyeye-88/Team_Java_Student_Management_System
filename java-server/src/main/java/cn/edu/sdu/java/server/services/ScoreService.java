@@ -10,11 +10,15 @@ import cn.edu.sdu.java.server.repositorys.CourseRepository;
 import cn.edu.sdu.java.server.repositorys.ScoreRepository;
 import cn.edu.sdu.java.server.repositorys.StudentRepository;
 import cn.edu.sdu.java.server.util.CommonMethod;
+import cn.edu.sdu.java.server.util.ExcelGenerator;
 import cn.edu.sdu.java.server.util.ParamCheckUtil;
 import cn.edu.sdu.java.server.util.RoleCheckUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.*;
 
@@ -229,5 +233,58 @@ public class ScoreService {
             result.add(m);
         }
         return result;
+    }
+
+    /**
+     * 导出学生成绩单 Excel
+     * @param dataRequest 请求参数，包含 personId
+     * @return Excel 文件流
+     */
+    public ResponseEntity<StreamingResponseBody> exportScoreExcel(DataRequest dataRequest) {
+        try {
+            Integer personId = dataRequest.getInteger("personId");
+            if (personId == null || personId <= 0) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 权限控制：学生只能导出自己的成绩
+            Integer currentUserId = CommonMethod.getPersonId();
+            boolean isAdminOrTeacher = RoleCheckUtil.isAdmin() || RoleCheckUtil.hasRole("TEACHER");
+            
+            if (!isAdminOrTeacher) {
+                personId = currentUserId;
+            }
+
+            // 查询该学生所有成绩
+            List<Score> scoreList = scoreRepository.findByStudentPersonId(personId);
+            if (scoreList.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 获取学生信息
+            Student student = scoreList.get(0).getStudent();
+            String studentName = student.getPerson().getName();
+            String studentNum = student.getPerson().getNum();
+            String className = student.getClassName();
+
+            // 转换为 Map 列表
+            List<Map<String, Object>> scores = getScoreMapList(scoreList);
+
+            // 生成 Excel
+            byte[] excelBytes = ExcelGenerator.generateScoreExcel(studentName, studentNum, className, scores);
+
+            // 返回文件流
+            StreamingResponseBody stream = outputStream -> outputStream.write(excelBytes);
+            String fileName = studentName + "_成绩单.xlsx";
+            String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
+            
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName)
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(stream);
+        } catch (Exception e) {
+            log.error("导出成绩单失败", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

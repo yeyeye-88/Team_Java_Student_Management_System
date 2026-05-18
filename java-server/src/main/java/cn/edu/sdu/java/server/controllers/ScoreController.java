@@ -5,7 +5,9 @@ import cn.edu.sdu.java.server.payload.response.DataResponse;
 import cn.edu.sdu.java.server.payload.response.OptionItemList;
 import cn.edu.sdu.java.server.services.ScoreService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -37,6 +39,11 @@ public class ScoreController {
     @PostMapping("/scoreDelete")
     public DataResponse scoreDelete(@Valid @RequestBody DataRequest dataRequest) {
         return scoreService.scoreDelete(dataRequest);
+    }
+
+    @PostMapping("/exportExcel")
+    public ResponseEntity<StreamingResponseBody> exportScoreExcel(@Valid @RequestBody DataRequest dataRequest) {
+        return scoreService.exportScoreExcel(dataRequest);
     }
 
 }
