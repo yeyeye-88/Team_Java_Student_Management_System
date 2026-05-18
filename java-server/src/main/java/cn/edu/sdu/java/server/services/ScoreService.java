@@ -238,27 +238,40 @@ public class ScoreService {
     /**
      * 导出学生成绩单 Excel
      * @param dataRequest 请求参数，包含 personId
-     * @return Excel 文件流
+     * @return Excel 文件流或错误消息
      */
-    public ResponseEntity<StreamingResponseBody> exportScoreExcel(DataRequest dataRequest) {
+    public ResponseEntity<Object> exportScoreExcel(DataRequest dataRequest) {
         try {
             Integer personId = dataRequest.getInteger("personId");
             if (personId == null || personId <= 0) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body(CommonMethod.getReturnMessageError("缺少学生 ID！"));
             }
 
             // 权限控制：学生只能导出自己的成绩
             Integer currentUserId = CommonMethod.getPersonId();
-            boolean isAdminOrTeacher = RoleCheckUtil.isAdmin() || RoleCheckUtil.hasRole("TEACHER");
+            boolean isAdminOrTeacher = RoleCheckUtil.isAdminOrTeacher();
             
+            log.info("[导出权限检查] 传入 personId={}, 当前登录 user ID={}, 是否管理员/教师={}", personId, currentUserId, isAdminOrTeacher);
+            
+            // 如果是学生
             if (!isAdminOrTeacher) {
+                log.info("[导出权限检查] 当前是学生身份，执行越权检测...");
+                // 如果传入了 personId，且不是自己的，直接拒绝
+                if (currentUserId != null && personId != null && !personId.equals(currentUserId)) {
+                    log.warn("学生越权拦截：用户 {} 尝试下载用户 {} 的成绩单，已拒绝！", currentUserId, personId);
+                    return ResponseEntity.badRequest().body(CommonMethod.getReturnMessageError("学生只能打印自己的成绩单！"));
+                }
+                // 强制使用自己的 ID
                 personId = currentUserId;
+                log.info("[导出权限检查] 强制使用当前用户 ID: {}", personId);
+            } else {
+                log.info("[导出权限检查] 管理员/教师，允许导出任意学生成绩单");
             }
 
             // 查询该学生所有成绩
             List<Score> scoreList = scoreRepository.findByStudentPersonId(personId);
             if (scoreList.isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body(CommonMethod.getReturnMessageError("该学生没有成绩记录！"));
             }
 
             // 获取学生信息
@@ -284,7 +297,7 @@ public class ScoreService {
                     .body(stream);
         } catch (Exception e) {
             log.error("导出成绩单失败", e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(CommonMethod.getReturnMessageError("导出失败：" + e.getMessage()));
         }
     }
 }

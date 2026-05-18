@@ -42,7 +42,7 @@ public class ScoreController {
     }
 
     @PostMapping("/exportExcel")
-    public ResponseEntity<StreamingResponseBody> exportScoreExcel(@Valid @RequestBody DataRequest dataRequest) {
+    public ResponseEntity<Object> exportScoreExcel(@Valid @RequestBody DataRequest dataRequest) {
         return scoreService.exportScoreExcel(dataRequest);
     }
 
