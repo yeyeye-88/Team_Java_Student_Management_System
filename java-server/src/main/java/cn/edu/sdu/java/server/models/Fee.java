@@ -15,8 +15,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(	name = "fee"
-)
+@Table(	name = "fee",
+		indexes = {
+			@Index(name = "idx_fee_student", columnList = "person_id"),
+			@Index(name = "idx_fee_day", columnList = "day"),
+			@Index(name = "idx_fee_type", columnList = "type"),
+			@Index(name = "idx_fee_student_day", columnList = "person_id,day")
+		})
 public class Fee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

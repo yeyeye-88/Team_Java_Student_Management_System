@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                         authz -> {
                             try {
                                 authz
-                                        .requestMatchers("/auth/login", "/auth/getValidateCode", "/auth/testValidateInfo")
+                                        .requestMatchers("/auth/**")
                                         .permitAll()
                                         .requestMatchers("/api/**")
                                         .authenticated()

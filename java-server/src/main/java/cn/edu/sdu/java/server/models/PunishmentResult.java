@@ -13,7 +13,10 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "punishment_result")
+@Table(name = "punishment_result",
+       indexes = {
+           @Index(name = "idx_result_punishment", columnList = "punishment_id")
+       })
 public class PunishmentResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -13,7 +13,13 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "honor_record")
+@Table(name = "honor_record",
+       indexes = {
+           @Index(name = "idx_honor_person", columnList = "person_id"),
+           @Index(name = "idx_honor_level", columnList = "level"),
+           @Index(name = "idx_honor_status", columnList = "status"),
+           @Index(name = "idx_honor_date", columnList = "award_date")
+       })
 public class HonorRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,4 +53,8 @@ public class HonorRecord {
 
     @Column(name = "create_time")
     private Date createTime;
+
+    // 证书扫描件路径（用于上传证书图片/PDF）
+    @Size(max = 500)
+    private String certificateUrl;
 }

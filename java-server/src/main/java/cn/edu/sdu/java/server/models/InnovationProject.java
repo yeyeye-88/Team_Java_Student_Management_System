@@ -10,7 +10,15 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "innovation_project")
+@Table(name = "innovation_project",
+       indexes = {
+           @Index(name = "idx_project_leader", columnList = "leader_id"),
+           @Index(name = "idx_project_status", columnList = "status"),
+           @Index(name = "idx_project_category", columnList = "category")
+       },
+       uniqueConstraints = {
+           @UniqueConstraint(name = "uk_project_name", columnNames = "name")
+       })
 public class InnovationProject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

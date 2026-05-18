@@ -8,6 +8,9 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(	name = "family_member",
+		indexes = {
+			@Index(name = "idx_family_student", columnList = "person_id")
+		},
         uniqueConstraints = {
         })
 public class FamilyMember {
