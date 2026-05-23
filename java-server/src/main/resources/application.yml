@@ -40,7 +40,7 @@ spring:
       force: true
 
 attach:
-  folder: /teach-2025/
+  folder: ${user.dir}/uploads/
 
 logging:
   config: classpath:logback.xml
