@@ -313,4 +313,76 @@ public class FeeService {
             throw new RuntimeException("查询失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 删除消费记录
+     * 权限：管理员可删除任何记录，学生不能删除
+     */
+    public DataResponse deleteFee(DataRequest dataRequest) {
+        try {
+            // 权限校验：只有管理员可以删除
+            if (!RoleCheckUtil.isAdmin()) {
+                return CommonMethod.getReturnMessageError("权限不足，只有管理员可以删除消费记录！");
+            }
+
+            Integer feeId = dataRequest.getInteger("feeId");
+            String errorMsg = ParamCheckUtil.checkRequired(feeId != null ? feeId.toString() : "", "消费记录 ID");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            Optional<Fee> feeOp = feeRepository.findById(feeId);
+            if (feeOp.isEmpty()) {
+                return CommonMethod.getReturnMessageError("消费记录不存在！");
+            }
+
+            feeRepository.delete(feeOp.get());
+            log.info("删除消费记录成功，feeId: {}, 操作人: {}", feeId, CommonMethod.getPersonId());
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("删除消费记录失败", e);
+            throw new RuntimeException("删除失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 修改消费记录
+     * 权限：管理员可修改任何记录，学生不能修改
+     */
+    public DataResponse updateFee(DataRequest dataRequest) {
+        try {
+            // 权限校验：只有管理员可以修改
+            if (!RoleCheckUtil.isAdmin()) {
+                return CommonMethod.getReturnMessageError("权限不足，只有管理员可以修改消费记录！");
+            }
+
+            Integer feeId = dataRequest.getInteger("feeId");
+            String day = dataRequest.getString("day");
+            Double money = dataRequest.getDouble("money");
+
+            String errorMsg = ParamCheckUtil.checkRequired(feeId != null ? feeId.toString() : "", "消费记录 ID");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            errorMsg = ParamCheckUtil.checkRequired(day, "日期");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            if (money == null || money <= 0) {
+                return CommonMethod.getReturnMessageError("金额必须大于 0！");
+            }
+
+            Optional<Fee> feeOp = feeRepository.findById(feeId);
+            if (feeOp.isEmpty()) {
+                return CommonMethod.getReturnMessageError("消费记录不存在！");
+            }
+
+            Fee fee = feeOp.get();
+            fee.setDay(day);
+            fee.setMoney(money);
+
+            feeRepository.save(fee);
+            log.info("修改消费记录成功，feeId: {}, 操作人: {}", feeId, CommonMethod.getPersonId());
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("修改消费记录失败", e);
+            throw new RuntimeException("修改失败：" + e.getMessage());
+        }
+    }
 }

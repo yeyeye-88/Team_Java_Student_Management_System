@@ -66,4 +66,34 @@ public class FeeController {
     public DataResponse detectAbnormalConsumption(@Valid @RequestBody DataRequest dataRequest) {
         return feeService.detectAbnormalConsumption(dataRequest);
     }
+
+    /**
+     * 查询消费账单列表
+     * @param dataRequest 包含 personId（可选）, type（可选）, month（可选）
+     * @return 消费账单列表
+     */
+    @PostMapping("/list")
+    public DataResponse getFeeList(@Valid @RequestBody DataRequest dataRequest) {
+        return feeService.getFeeList(dataRequest);
+    }
+
+    /**
+     * 删除消费记录
+     * @param dataRequest 包含 feeId
+     * @return 删除结果
+     */
+    @PostMapping("/delete")
+    public DataResponse deleteFee(@Valid @RequestBody DataRequest dataRequest) {
+        return feeService.deleteFee(dataRequest);
+    }
+
+    /**
+     * 修改消费记录
+     * @param dataRequest 包含 feeId, day, money
+     * @return 修改结果
+     */
+    @PostMapping("/update")
+    public DataResponse updateFee(@Valid @RequestBody DataRequest dataRequest) {
+        return feeService.updateFee(dataRequest);
+    }
 }
