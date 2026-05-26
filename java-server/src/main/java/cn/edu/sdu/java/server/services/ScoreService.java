@@ -18,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.*;
 
@@ -286,15 +285,19 @@ public class ScoreService {
             // 生成 Excel
             byte[] excelBytes = ExcelGenerator.generateScoreExcel(studentName, studentNum, className, scores);
 
-            // 返回文件流
-            StreamingResponseBody stream = outputStream -> outputStream.write(excelBytes);
+            if (excelBytes == null || excelBytes.length == 0) {
+                return ResponseEntity.internalServerError().body(CommonMethod.getReturnMessageError("Excel 生成失败，文件内容为空！"));
+            }
+
+            // 返回二进制文件内容（避免返回 Lambda 导致 HttpMessageNotWritableException）
             String fileName = studentName + "_成绩单.xlsx";
             String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
             
             return ResponseEntity.ok()
                     .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName)
+                    .header("Content-Length", String.valueOf(excelBytes.length))
                     .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                    .body(stream);
+                    .body(excelBytes);
         } catch (Exception e) {
             log.error("导出成绩单失败", e);
             return ResponseEntity.internalServerError().body(CommonMethod.getReturnMessageError("导出失败：" + e.getMessage()));
