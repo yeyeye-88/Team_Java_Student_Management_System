@@ -93,7 +93,7 @@ public class SystemService {
             Person person = new Person();
             person.setNum(adminUsername);
             person.setName("系统管理员");
-            person.setType("0"); // 管理员类型
+            person.setType("1"); // 管理员类型
             personRepository.saveAndFlush(person);
             
             // 获取管理员用户类型

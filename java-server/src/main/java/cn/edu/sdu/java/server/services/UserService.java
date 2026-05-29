@@ -111,7 +111,7 @@ public class UserService {
                     Person p = new Person();
                     p.setNum(userName);
                     p.setName(userName); // 默认名字同账号
-                    p.setType("0"); // 默认类型
+                    p.setType("1"); // 默认类型（管理员）
                     personRepository.saveAndFlush(p); // 保存并立即获取 ID
                     u.setPersonId(p.getPersonId());
                 }

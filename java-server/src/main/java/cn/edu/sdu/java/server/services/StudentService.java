@@ -240,7 +240,7 @@ public class StudentService {
                 p = new Person();
                 p.setNum(num);
                 p.setName(name);
-                p.setType("1");
+                p.setType("2");
                 p.setDept(CommonMethod.getString(form, "dept"));
                 p.setCard(CommonMethod.getString(form, "card"));
                 p.setGender(CommonMethod.getString(form, "gender"));

@@ -131,13 +131,13 @@ public class AuthService {
         p.setName(perName);
         p.setEmail(email);
         if("ADMIN".equals(role)) {
-            p.setType("0");
+            p.setType("1");
             ut = userTypeRepository.findByName(EUserType.ROLE_ADMIN.name());
         }else if("STUDENT".equals(role)) {
-            p.setType("1");
+            p.setType("2");
             ut = userTypeRepository.findByName(EUserType.ROLE_STUDENT.name());
         }else if("TEACHER".equals(role)) {
-            p.setType("2");
+            p.setType("3");
             ut = userTypeRepository.findByName(EUserType.ROLE_TEACHER.name());
         }
         personRepository.saveAndFlush(p);
