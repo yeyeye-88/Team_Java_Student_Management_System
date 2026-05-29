@@ -587,6 +587,9 @@ public class StudentService {
             }
             if(f== null) {
                 f = new FamilyMember();
+                if (personId == null) {
+                    return CommonMethod.getReturnMessageError("学生ID不能为空！");
+                }
                 Optional<Student> studentOp = studentRepository.findById(personId);
                 if (studentOp.isPresent()) {
                     f.setStudent(studentOp.get());
