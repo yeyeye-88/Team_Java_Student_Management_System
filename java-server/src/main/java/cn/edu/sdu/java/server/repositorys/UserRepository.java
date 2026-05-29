@@ -33,4 +33,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     // 第 7 周任务：统计功能 - 统计总用户数
     long count();
+
+    /**
+     * 统计指定日期范围内的登录用户数
+     * @param startTime 开始时间 yyyy-MM-dd HH:mm:ss
+     * @param endTime 结束时间 yyyy-MM-dd HH:mm:ss
+     * @return 登录用户数
+     */
+    @Query(value = "SELECT COUNT(*) FROM User WHERE lastLoginTime >= ?1 AND lastLoginTime <= ?2")
+    Integer countLoginByDate(String startTime, String endTime);
 }
