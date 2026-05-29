@@ -157,4 +157,80 @@ public class AuthService {
         }
         return CommonMethod.getReturnData(LoginControlUtil.getInstance().getValidateCodeDataMap());
     }
+    
+    /**
+     * 退出登录
+     */
+    public DataResponse logout() {
+        try {
+            // 清除SecurityContext中的认证信息
+            SecurityContextHolder.clearContext();
+            log.info("用户退出登录成功，操作人: {}", CommonMethod.getUsername());
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("退出登录失败", e);
+            return CommonMethod.getReturnMessageError("退出失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 修改密码
+     */
+    public DataResponse changePassword(DataRequest dataRequest) {
+        try {
+            String oldPassword = dataRequest.getString("oldPassword");
+            String newPassword = dataRequest.getString("newPassword");
+            String confirmPassword = dataRequest.getString("confirmPassword");
+            
+            // 参数校验
+            if (oldPassword == null || oldPassword.trim().isEmpty()) {
+                return CommonMethod.getReturnMessageError("旧密码不能为空！");
+            }
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                return CommonMethod.getReturnMessageError("新密码不能为空！");
+            }
+            if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+                return CommonMethod.getReturnMessageError("确认密码不能为空！");
+            }
+            if (!newPassword.equals(confirmPassword)) {
+                return CommonMethod.getReturnMessageError("两次输入的新密码不一致！");
+            }
+            if (newPassword.length() < 6) {
+                return CommonMethod.getReturnMessageError("新密码长度不能少于6位！");
+            }
+            
+            // 获取当前用户
+            String username = CommonMethod.getUsername();
+            if (username == null || username.trim().isEmpty()) {
+                return CommonMethod.getReturnMessageError("用户未登录！");
+            }
+            
+            Optional<User> userOp = userRepository.findByUserName(username);
+            if (userOp.isEmpty()) {
+                return CommonMethod.getReturnMessageError("用户不存在！");
+            }
+            
+            User user = userOp.get();
+            
+            // 验证旧密码
+            if (!encoder.matches(oldPassword, user.getPassword())) {
+                return CommonMethod.getReturnMessageError("旧密码错误！");
+            }
+            
+            // 检查新密码是否与旧密码相同
+            if (encoder.matches(newPassword, user.getPassword())) {
+                return CommonMethod.getReturnMessageError("新密码不能与旧密码相同！");
+            }
+            
+            // 更新密码
+            user.setPassword(encoder.encode(newPassword));
+            userRepository.save(user);
+            
+            log.info("用户修改密码成功，用户名: {}", username);
+            return CommonMethod.getReturnMessageOK();
+        } catch (Exception e) {
+            log.error("修改密码失败", e);
+            return CommonMethod.getReturnMessageError("修改失败：" + e.getMessage());
+        }
+    }
 }

@@ -49,17 +49,32 @@ public class StudentLeaveService {
             if (RoleCheckUtil.isAdmin() || RoleCheckUtil.hasRole("TEACHER")) {
                 // 管理员/教师可查所有，按条件筛选
                 leaveList = studentLeaveRepository.getStudentLeaveList(state, search, studentNum, teacherNum);
+                log.info("管理员/教师查询请假列表，返回 {} 条记录", leaveList != null ? leaveList.size() : 0);
             } else {
                 // 学生只能查自己的请假记录
                 Integer personId = CommonMethod.getPersonId();
                 if (personId == null) {
                     return CommonMethod.getReturnMessageError("用户信息不存在！");
                 }
+                log.info("学生查询请假列表，personId: {}", personId);
                 leaveList = studentLeaveRepository.getStudentLeaveList(-1, search, studentNum, teacherNum);
-                leaveList.removeIf(sl -> !sl.getStudent().getPerson().getPersonId().equals(personId));
+                log.info("查询到原始记录数: {}", leaveList != null ? leaveList.size() : 0);
+                
+                if (leaveList != null) {
+                    leaveList.removeIf(sl -> {
+                        if (sl.getStudent() == null || sl.getStudent().getPerson() == null) {
+                            log.warn("请假记录 {} 的student或person为null，过滤掉", sl.getStudentLeaveId());
+                            return true;
+                        }
+                        return !sl.getStudent().getPerson().getPersonId().equals(personId);
+                    });
+                }
+                log.info("过滤后剩余记录数: {}", leaveList != null ? leaveList.size() : 0);
             }
 
-            return CommonMethod.getReturnData(getStudentLeaveMapList(leaveList));
+            List<Map<String, Object>> result = getStudentLeaveMapList(leaveList);
+            log.info("最终返回前端数据条数: {}", result.size());
+            return CommonMethod.getReturnData(result);
         } catch (Exception e) {
             log.error("查询请假列表失败", e);
             return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());

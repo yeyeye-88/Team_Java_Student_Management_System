@@ -53,4 +53,20 @@ public class AuthController {
     public DataResponse generatePassword(@RequestParam String password) {
         return authService.generatePassword(password);
     }
+    
+    /**
+     * 退出登录
+     */
+    @PostMapping("/logout")
+    public DataResponse logout() {
+        return authService.logout();
+    }
+    
+    /**
+     * 修改密码
+     */
+    @PostMapping("/changePassword")
+    public DataResponse changePassword(@Valid @RequestBody DataRequest dataRequest) {
+        return authService.changePassword(dataRequest);
+    }
 }
