@@ -11,7 +11,7 @@ public interface StudentLeaveRepository extends JpaRepository<StudentLeave,Integ
            "LEFT JOIN FETCH sl.student s " +
            "LEFT JOIN FETCH s.person sp " +
            "LEFT JOIN FETCH sl.teacher t " +
-           "LEFT JOIN FETCH t.person tp " +
+           "LEFT JOIN t.person tp " +
            "WHERE (?1 < 0 OR sl.state = ?1) " +
            "AND (?2 = '' OR sp.name LIKE CONCAT('%', ?2, '%') OR tp.name LIKE CONCAT('%', ?2, '%') OR sl.reason LIKE CONCAT('%', ?2, '%')) " +
            "AND (?3 = '' OR sp.num = ?3) " +
