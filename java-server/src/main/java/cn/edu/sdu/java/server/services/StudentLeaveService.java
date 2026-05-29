@@ -117,6 +117,9 @@ public class StudentLeaveService {
             }
 
             // 查找学生
+            if (personId == null) {
+                return CommonMethod.getReturnMessageError("学生ID不能为空！");
+            }
             Optional<Student> sOp = studentRepository.findById(personId);
             if (sOp.isEmpty()) {
                 return CommonMethod.getReturnMessageError("学生不存在！");
