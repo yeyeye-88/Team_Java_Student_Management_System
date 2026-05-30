@@ -102,8 +102,13 @@ public class StatisticsService {
             );
             rList.add(requestCount != null ? requestCount : 0);
             
-            // 实时查询当天的创建数（暂时用0，可根据需求扩展）
-            cList.add(0);
+            // 实时查询当天的创建数（从 modify_log 表统计 type='0' 的记录）
+            Integer createCount = modifyLogRepository.countByTypeAndDate(
+                "0",
+                dateTimeStr + " 00:00:00", 
+                dateTimeStr + " 23:59:59"
+            );
+            cList.add(createCount != null ? createCount : 0);
             
             // 实时查询当天的修改数
             Integer modifyCount = modifyLogRepository.countByDate(

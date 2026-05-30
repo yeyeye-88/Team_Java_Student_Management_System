@@ -19,4 +19,14 @@ public interface ModifyLogRepository extends JpaRepository<ModifyLog,Integer>{
      */
     @Query(value = "SELECT COUNT(*) FROM ModifyLog WHERE operateTime >= ?1 AND operateTime <= ?2")
     Integer countByDate(String startTime, String endTime);
+    
+    /**
+     * 统计指定日期范围内指定类型的记录数
+     * @param type 操作类型 0=新增, 1=修改
+     * @param startTime 开始时间 yyyy-MM-dd HH:mm:ss
+     * @param endTime 结束时间 yyyy-MM-dd HH:mm:ss
+     * @return 记录数
+     */
+    @Query(value = "SELECT COUNT(*) FROM ModifyLog WHERE type = ?1 AND operateTime >= ?2 AND operateTime <= ?3")
+    Integer countByTypeAndDate(String type, String startTime, String endTime);
 }
