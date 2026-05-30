@@ -110,8 +110,9 @@ public class StatisticsService {
             );
             cList.add(createCount != null ? createCount : 0);
             
-            // 实时查询当天的修改数
-            Integer modifyCount = modifyLogRepository.countByDate(
+            // 实时查询当天的修改数（从 modify_log 表统计 type='1' 的记录）
+            Integer modifyCount = modifyLogRepository.countByTypeAndDate(
+                "1",
                 dateTimeStr + " 00:00:00", 
                 dateTimeStr + " 23:59:59"
             );
