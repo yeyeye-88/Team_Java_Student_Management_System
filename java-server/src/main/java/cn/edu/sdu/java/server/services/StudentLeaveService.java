@@ -43,6 +43,11 @@ public class StudentLeaveService {
             String search = CommonMethod.getString(form, "search");
             String studentNum = CommonMethod.getString(form, "studentNum");
             String teacherNum = CommonMethod.getString(form, "teacherNum");
+            
+            // 如果state为null，设置为-1表示查询所有状态
+            if (state == null) {
+                state = -1;
+            }
 
             List<StudentLeave> leaveList;
 
@@ -210,12 +215,46 @@ public class StudentLeaveService {
             m.put("studentName", sl.getStudent().getPerson().getName());
             m.put("leaveDate", sl.getLeaveDate());
             m.put("reason", sl.getReason());
-            m.put("state", sl.getState());
+            
+            // 简化状态逻辑：0=待审批，1或2=已审批，3=已拒绝
+            Integer state = sl.getState();
+            if (state != null && (state == 1 || state == 2)) {
+                state = 2; // 统一为已审批
+            }
+            m.put("state", state);
+            
+            // 添加状态文本，方便前端显示
+            String stateText;
+            if (state == null || state == 0) {
+                stateText = "待审批";
+            } else if (state == 2) {
+                stateText = "已审批";
+            } else if (state == 3) {
+                stateText = "已拒绝";
+            } else {
+                stateText = "未知";
+            }
+            m.put("stateText", stateText);
+            
             m.put("applyTime", sl.getApplyTime());
             m.put("teacherComment", sl.getTeacherComment());
             m.put("teacherTime", sl.getTeacherTime());
             m.put("adminComment", sl.getAdminComment());
             m.put("adminTime", sl.getAdminTime());
+            m.put("leaveType", sl.getLeaveType());
+            m.put("leaveDuration", sl.getLeaveDuration());
+
+            // 解析leaveDate，提取开始日期和结束日期
+            String leaveDate = sl.getLeaveDate();
+            if (leaveDate != null && leaveDate.contains("至")) {
+                String[] dates = leaveDate.split("至");
+                m.put("startDate", dates[0].trim());
+                m.put("endDate", dates.length > 1 ? dates[1].trim() : dates[0].trim());
+            } else {
+                // 单个日期，开始和结束都是同一天
+                m.put("startDate", leaveDate);
+                m.put("endDate", leaveDate);
+            }
 
             if (sl.getTeacher() != null && sl.getTeacher().getPerson() != null) {
                 m.put("teacherName", sl.getTeacher().getPerson().getName());

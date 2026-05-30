@@ -75,10 +75,10 @@ public class StatisticsService {
         
         // 5. 【关键修改】动态生成最近10天的统计数据，实时查询
         List<String> dayList = new ArrayList<>();
-        List<String> lList = new ArrayList<>();  // 登录数
-        List<String> rList = new ArrayList<>();  // 请求数
-        List<String> cList = new ArrayList<>();  // 创建数
-        List<String> mList = new ArrayList<>();  // 修改数
+        List<Integer> lList = new ArrayList<>();  // 登录数
+        List<Integer> rList = new ArrayList<>();  // 请求数
+        List<Integer> cList = new ArrayList<>();  // 创建数
+        List<Integer> mList = new ArrayList<>();  // 修改数
         
         // 遍历最近10天（从今天往前推9天）
         for (int d = 9; d >= 0; d--) {
@@ -93,24 +93,24 @@ public class StatisticsService {
                 dateTimeStr + " 00:00:00", 
                 dateTimeStr + " 23:59:59"
             );
-            lList.add(String.valueOf(loginCount != null ? loginCount : 0));
+            lList.add(loginCount != null ? loginCount : 0);
             
             // 实时查询当天的请求次数
             Integer requestCount = requestLogRepository.countByDate(
                 dateTimeStr + " 00:00:00", 
                 dateTimeStr + " 23:59:59"
             );
-            rList.add(String.valueOf(requestCount != null ? requestCount : 0));
+            rList.add(requestCount != null ? requestCount : 0);
             
             // 实时查询当天的创建数（暂时用0，可根据需求扩展）
-            cList.add("0");
+            cList.add(0);
             
             // 实时查询当天的修改数
             Integer modifyCount = modifyLogRepository.countByDate(
                 dateTimeStr + " 00:00:00", 
                 dateTimeStr + " 23:59:59"
             );
-            mList.add(String.valueOf(modifyCount != null ? modifyCount : 0));
+            mList.add(modifyCount != null ? modifyCount : 0);
         }
         
         m = new HashMap<>();
