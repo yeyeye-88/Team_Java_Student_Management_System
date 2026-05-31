@@ -113,14 +113,16 @@ public class ActivityService {
             String errorMsg = ParamCheckUtil.checkRequired(activityId != null ? activityId.toString() : "", "活动 ID");
             if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
 
-            // 权限校验：学生只能参与自己
-            if (RoleCheckUtil.hasRole("STUDENT")) {
-                Integer currentPersonId = CommonMethod.getPersonId();
-                if (personId != null && !currentPersonId.equals(personId)) {
-                    return CommonMethod.getReturnMessageError("权限不足，只能为自己报名！");
-                }
-                personId = currentPersonId;
+            // 权限校验：只有学生可以参与活动
+            if (!RoleCheckUtil.hasRole("STUDENT")) {
+                return CommonMethod.getReturnMessageError("抱歉，活动参与功能仅对学生开放！教师和管理员可以发布和管理活动，但不能参与活动报名。");
             }
+            
+            Integer currentPersonId = CommonMethod.getPersonId();
+            if (personId != null && !currentPersonId.equals(personId)) {
+                return CommonMethod.getReturnMessageError("权限不足，只能为自己报名！");
+            }
+            personId = currentPersonId;
 
             // 检查是否已参与
             ActivityParticipation existing = participationRepository.findByActivityIdAndPersonId(activityId, personId);
