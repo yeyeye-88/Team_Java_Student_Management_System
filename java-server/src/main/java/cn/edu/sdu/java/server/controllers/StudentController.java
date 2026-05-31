@@ -41,7 +41,7 @@ public class StudentController {
 
 
     @PostMapping("/getStudentList")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STUDENT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STUDENT') or hasRole('TEACHER')")
     public DataResponse getStudentList(@Valid @RequestBody DataRequest dataRequest) {
         return studentService.getStudentList(dataRequest);
     }

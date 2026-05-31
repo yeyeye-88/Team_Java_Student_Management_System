@@ -276,6 +276,7 @@ public class FeeService {
     public DataResponse getFeeList(DataRequest dataRequest) {
         try {
             Integer personId = dataRequest != null ? dataRequest.getInteger("personId") : null;
+            String studentName = dataRequest != null ? dataRequest.getString("studentName") : null;
             Integer type = dataRequest != null ? dataRequest.getInteger("type") : null;
             String month = dataRequest != null ? dataRequest.getString("month") : null;
 
@@ -293,6 +294,10 @@ public class FeeService {
 
             for (Fee fee : fees) {
                 if (personId != null && !fee.getStudent().getPersonId().equals(personId)) continue;
+                if (studentName != null && !studentName.isEmpty()) {
+                    String name = fee.getStudent().getPerson().getName();
+                    if (name == null || !name.contains(studentName)) continue;
+                }
                 if (type != null && !fee.getType().equals(type)) continue;
                 if (month != null && !fee.getDay().startsWith(month)) continue;
 
