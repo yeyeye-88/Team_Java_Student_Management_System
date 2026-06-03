@@ -1,5 +1,7 @@
 package cn.edu.sdu.java.server.services;
 
+import cn.edu.sdu.java.server.models.Course;
+import cn.edu.sdu.java.server.models.StudentLeave;
 import cn.edu.sdu.java.server.payload.response.DataResponse;
 import cn.edu.sdu.java.server.repositorys.*;
 import cn.edu.sdu.java.server.util.CommonMethod;
@@ -78,7 +80,15 @@ public class StatService {
                 // 保留两位小数
                 avgScore = Math.round(avgScore * 100.0) / 100.0;
                 
+                // 获取课程名称
+                String courseName = "";
+                Optional<Course> courseOpt = courseRepository.findById(courseId);
+                if (courseOpt.isPresent()) {
+                    courseName = courseOpt.get().getName();
+                }
+                
                 m.put("courseId", courseId);
+                m.put("courseName", courseName);
                 m.put("avgScore", avgScore);
                 dataList.add(m);
             }
@@ -97,20 +107,66 @@ public class StatService {
      */
     public DataResponse getAttendanceRate() {
         try {
-            List<Object[]> resultList = attendanceRepository.getAttendanceRateByCourse();
-            List<Map<String, Object>> dataList = new ArrayList<>();
+            // 获取按课程和状态分类的统计数据
+            List<Object[]> resultList = attendanceRepository.getAttendanceStatsByCourseAndState();
+            
+            // 按课程分组
+            Map<Integer, Map<String, Object>> courseMap = new LinkedHashMap<>();
+            
+            // 状态码映射：0-未到，1-迟到，2-早退，3-正常，4-请假
+            Map<Integer, String> statusMap = new HashMap<>();
+            statusMap.put(0, "未到");
+            statusMap.put(1, "迟到");
+            statusMap.put(2, "早退");
+            statusMap.put(3, "正常");
+            statusMap.put(4, "请假");
             
             for (Object[] row : resultList) {
-                Map<String, Object> m = new HashMap<>();
                 Integer courseId = ((Number) row[0]).intValue();
-                Double attendanceRate = (Double) row[1];
+                Integer state = ((Number) row[1]).intValue();
+                Long count = (Long) row[2];
                 
-                // 保留两位小数
-                attendanceRate = Math.round(attendanceRate * 100.0) / 100.0;
+                // 如果该课程还没有在map中，初始化
+                if (!courseMap.containsKey(courseId)) {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("courseId", courseId);
+                    
+                    // 获取课程名称
+                    String courseName = "";
+                    Optional<Course> courseOpt = courseRepository.findById(courseId);
+                    if (courseOpt.isPresent()) {
+                        courseName = courseOpt.get().getName();
+                    }
+                    m.put("courseName", courseName);
+                    m.put("totalCount", 0L);
+                    
+                    // 初始化各状态的计数
+                    for (int i = 0; i <= 4; i++) {
+                        m.put(statusMap.get(i), 0L);
+                    }
+                    courseMap.put(courseId, m);
+                }
                 
-                m.put("courseId", courseId);
-                m.put("attendanceRate", attendanceRate);
-                dataList.add(m);
+                // 更新该课程的统计数据
+                Map<String, Object> courseData = courseMap.get(courseId);
+                courseData.put("totalCount", (Long) courseData.get("totalCount") + count);
+                courseData.put(statusMap.get(state), count);
+            }
+            
+            // 计算考勤率（正常出勤的比例）
+            List<Map<String, Object>> dataList = new ArrayList<>();
+            for (Map<String, Object> courseData : courseMap.values()) {
+                Long totalCount = (Long) courseData.get("totalCount");
+                Long normalCount = (Long) courseData.get("正常");
+                
+                Double attendanceRate = 0.0;
+                if (totalCount > 0) {
+                    attendanceRate = Math.round((normalCount * 100.0 / totalCount) * 100.0) / 100.0;
+                }
+                
+                courseData.put("attendanceRate", attendanceRate);
+                courseData.put("statusName", "正常"); // 主要统计的是正常出勤率
+                dataList.add(courseData);
             }
             
             log.info("查询课程考勤率统计成功，共 {} 门课程", dataList.size());
