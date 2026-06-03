@@ -1,9 +1,11 @@
 package cn.edu.sdu.java.server.services;
 
 import cn.edu.sdu.java.server.models.HonorRecord;
+import cn.edu.sdu.java.server.models.Person;
 import cn.edu.sdu.java.server.payload.request.DataRequest;
 import cn.edu.sdu.java.server.payload.response.DataResponse;
 import cn.edu.sdu.java.server.repositorys.HonorRecordRepository;
+import cn.edu.sdu.java.server.repositorys.PersonRepository;
 import cn.edu.sdu.java.server.util.CommonMethod;
 import cn.edu.sdu.java.server.util.ParamCheckUtil;
 import cn.edu.sdu.java.server.util.RoleCheckUtil;
@@ -23,9 +25,11 @@ import java.util.*;
 public class HonorService {
 
     private final HonorRecordRepository honorRecordRepository;
+    private final PersonRepository personRepository;
 
-    public HonorService(HonorRecordRepository honorRecordRepository) {
+    public HonorService(HonorRecordRepository honorRecordRepository, PersonRepository personRepository) {
         this.honorRecordRepository = honorRecordRepository;
+        this.personRepository = personRepository;
     }
 
     /**
@@ -109,6 +113,19 @@ public class HonorService {
                 Map<String, Object> m = new HashMap<>();
                 m.put("honorId", r.getHonorId());
                 m.put("personId", r.getPersonId());
+                
+                // 根据 personId 获取学生姓名
+                String studentName = "";
+                try {
+                    Optional<Person> personOpt = personRepository.findById(r.getPersonId());
+                    if (personOpt.isPresent()) {
+                        studentName = personOpt.get().getName();
+                    }
+                } catch (Exception e) {
+                    log.warn("获取学生姓名失败, personId: {}", r.getPersonId(), e);
+                }
+                m.put("studentName", studentName);
+                
                 m.put("title", r.getTitle());
                 m.put("level", r.getLevel());
                 m.put("category", r.getCategory());
