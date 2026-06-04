@@ -119,7 +119,7 @@ public class ActivityService {
             }
             
             Integer currentPersonId = CommonMethod.getPersonId();
-            if (personId != null && !currentPersonId.equals(personId)) {
+            if (currentPersonId == null || (personId != null && !Objects.equals(currentPersonId, personId))) {
                 return CommonMethod.getReturnMessageError("权限不足，只能为自己报名！");
             }
             personId = currentPersonId;
@@ -131,6 +131,9 @@ public class ActivityService {
             }
 
             // 检查活动是否存在
+            if (activityId == null || activityId <= 0) {
+                return CommonMethod.getReturnMessageError("活动 ID 不能为空！");
+            }
             Optional<Activity> activityOpt = activityRepository.findById(activityId);
             if (activityOpt.isEmpty()) {
                 return CommonMethod.getReturnMessageError("活动不存在！");
@@ -163,7 +166,7 @@ public class ActivityService {
                 // 权限校验：学生只能查自己的
                 if (RoleCheckUtil.hasRole("STUDENT")) {
                     Integer currentPersonId = CommonMethod.getPersonId();
-                    if (!currentPersonId.equals(personId)) {
+                    if (currentPersonId == null || !Objects.equals(currentPersonId, personId)) {
                         return CommonMethod.getReturnMessageError("权限不足，只能查询自己的参与记录！");
                     }
                 }
@@ -193,7 +196,10 @@ public class ActivityService {
 
     /**
      * 取消活动（管理员或教师）
+     * @param dataRequest 请求参数，包含 activityId
+     * @return 操作结果
      */
+    @SuppressWarnings("unused")
     public DataResponse cancelActivity(DataRequest dataRequest) {
         try {
             // 权限校验：管理员或教师
@@ -203,9 +209,9 @@ public class ActivityService {
 
             Map<String, Object> form = dataRequest.getMap("form");
             Integer activityId = CommonMethod.getInteger(form, "activityId");
-
-            String errorMsg = ParamCheckUtil.checkRequired(activityId != null ? activityId.toString() : "", "活动 ID");
-            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+            if (activityId == null || activityId <= 0) {
+                return CommonMethod.getReturnMessageError("活动 ID 不能为空！");
+            }
 
             Optional<Activity> activityOpt = activityRepository.findById(activityId);
             if (activityOpt.isEmpty()) {

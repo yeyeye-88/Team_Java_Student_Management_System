@@ -1,5 +1,7 @@
 package cn.edu.sdu.java.server.configs;
 
+import cn.edu.sdu.java.server.models.RequestLog;
+import cn.edu.sdu.java.server.repositorys.RequestLogRepository;
 import cn.edu.sdu.java.server.services.JwtService;
 import cn.edu.sdu.java.server.services.UserDetailsServiceImpl;
 import cn.edu.sdu.java.server.util.DateTimeTool;
@@ -29,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final RequestLogRepository requestLogRepository;
 
     @Autowired
     private RequestAttributeSecurityContextRepository repo;
@@ -36,11 +39,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public JwtAuthenticationFilter(
         JwtService jwtService,
         UserDetailsServiceImpl userDetailsService,
-        HandlerExceptionResolver handlerExceptionResolver
+        HandlerExceptionResolver handlerExceptionResolver,
+        RequestLogRepository requestLogRepository
     ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.handlerExceptionResolver = handlerExceptionResolver;
+        this.requestLogRepository = requestLogRepository;
     }
 
     @Override
@@ -88,6 +93,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             double requestTime = (int) (endDate.getTime() - startDate.getTime())/1000.;
             String startTime = DateTimeTool.parseDateTime(startDate);
             logger.info(url + "," +username+"," + startTime+ "," + requestTime);
+            
+            // 保存请求日志到数据库
+            try {
+                RequestLog requestLog = new RequestLog();
+                requestLog.setUrl(url);
+                requestLog.setUsername(username);
+                requestLog.setStartTime(startTime);
+                requestLog.setRequestTime(requestTime);
+                requestLogRepository.save(requestLog);
+            } catch (Exception e) {
+                logger.error("保存请求日志失败: " + e.getMessage());
+            }
         } catch (Exception exception) {
             exception.printStackTrace();
             handlerExceptionResolver.resolveException(request, response, null, exception);
