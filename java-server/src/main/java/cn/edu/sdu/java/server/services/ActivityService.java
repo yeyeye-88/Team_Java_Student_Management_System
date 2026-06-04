@@ -166,7 +166,7 @@ public class ActivityService {
                 // 权限校验：学生只能查自己的
                 if (RoleCheckUtil.hasRole("STUDENT")) {
                     Integer currentPersonId = CommonMethod.getPersonId();
-                    if (currentPersonId == null || personId == null || !Objects.equals(currentPersonId, personId)) {
+                    if (currentPersonId == null || !Objects.equals(currentPersonId, personId)) {
                         return CommonMethod.getReturnMessageError("权限不足，只能查询自己的参与记录！");
                     }
                 }
