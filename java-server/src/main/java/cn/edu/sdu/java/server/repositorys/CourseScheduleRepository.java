@@ -19,4 +19,9 @@ public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, 
     // 按课程查询课表
     @Query("FROM CourseSchedule WHERE course.courseId = ?1 AND semester = ?2 AND status = 1")
     List<CourseSchedule> findByCourseIdAndSemester(Integer courseId, String semester);
+
+    // 查询已停用的排课记录（用于重新启用）
+    @Query("FROM CourseSchedule WHERE course.courseId = ?1 AND className = ?2 AND semester = ?3 AND status = ?4")
+    List<CourseSchedule> findByCourse_CourseIdAndClassNameAndSemesterAndStatus(
+        Integer courseId, String className, String semester, Integer status);
 }

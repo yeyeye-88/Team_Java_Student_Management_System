@@ -77,14 +77,32 @@ public class CourseScheduleService {
             errorMsg = ParamCheckUtil.checkRequired(semester, "学期");
             if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
 
-            // 检查时间冲突
-            List<CourseSchedule> existingSchedules = scheduleRepository.findByClassNameAndSemester(className, semester);
-            for (CourseSchedule schedule : existingSchedules) {
-                if (schedule.getDayOfWeek().equals(dayOfWeek) &&
-                    schedule.getEndPeriod() >= startPeriod &&
-                    schedule.getStartPeriod() <= endPeriod) {
-                    return CommonMethod.getReturnMessageError("该班级在指定时间已有课程安排，请调整时间！");
+            // 检查是否存在已停用的排课记录（status=2）
+            List<CourseSchedule> allSchedules = scheduleRepository.findByClassNameAndSemester(className, semester);
+            CourseSchedule deletedSchedule = null;
+            for (CourseSchedule schedule : allSchedules) {
+                if (schedule.getStatus() == 2 && schedule.getCourse().getCourseId().equals(courseId)) {
+                    deletedSchedule = schedule;
+                    break;
                 }
+            }
+            
+            CourseSchedule schedule;
+            if (deletedSchedule != null) {
+                // 复用已停用的记录
+                schedule = deletedSchedule;
+                log.info("发现已停用的排课记录，scheduleId: {}，将重新启用", schedule.getScheduleId());
+            } else {
+                // 检查时间冲突（只检查正常状态的排课）
+                for (CourseSchedule existingSchedule : allSchedules) {
+                    if (existingSchedule.getStatus() == 1 && // 只检查正常状态
+                        existingSchedule.getDayOfWeek().equals(dayOfWeek) &&
+                        existingSchedule.getEndPeriod() >= startPeriod &&
+                        existingSchedule.getStartPeriod() <= endPeriod) {
+                        return CommonMethod.getReturnMessageError("该班级在指定时间已有课程安排，请调整时间！");
+                    }
+                }
+                schedule = new CourseSchedule();
             }
 
             Optional<Course> courseOpt = courseRepository.findById(courseId);
@@ -97,7 +115,6 @@ public class CourseScheduleService {
                 return CommonMethod.getReturnMessageError("教师不存在！");
             }
 
-            CourseSchedule schedule = new CourseSchedule();
             schedule.setCourse(courseOpt.get());
             schedule.setTeacher(teacherOpt.get());
             schedule.setClassName(className);
@@ -274,6 +291,12 @@ public class CourseScheduleService {
 
             CourseSchedule schedule = scheduleOpt.get();
             schedule.setStatus(2); // 2=停用
+            // 清空排课信息
+            schedule.setTeacher(null);
+            schedule.setDayOfWeek(null);
+            schedule.setStartPeriod(null);
+            schedule.setEndPeriod(null);
+            schedule.setLocation(null);
             scheduleRepository.save(schedule);
 
             log.info("删除课表成功，scheduleId: {}", scheduleId);

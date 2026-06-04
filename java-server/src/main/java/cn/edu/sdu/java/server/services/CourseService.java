@@ -1,9 +1,11 @@
 package cn.edu.sdu.java.server.services;
 
 import cn.edu.sdu.java.server.models.Course;
+import cn.edu.sdu.java.server.models.CourseSchedule;
 import cn.edu.sdu.java.server.payload.request.DataRequest;
 import cn.edu.sdu.java.server.payload.response.DataResponse;
 import cn.edu.sdu.java.server.repositorys.CourseRepository;
+import cn.edu.sdu.java.server.repositorys.CourseScheduleRepository;
 import cn.edu.sdu.java.server.util.CommonMethod;
 import cn.edu.sdu.java.server.util.ParamCheckUtil;
 import cn.edu.sdu.java.server.util.RoleCheckUtil;
@@ -20,9 +22,11 @@ import java.util.*;
 @Service
 public class CourseService {
     private final CourseRepository courseRepository;
+    private final CourseScheduleRepository scheduleRepository;
 
-    public CourseService(CourseRepository courseRepository) {
+    public CourseService(CourseRepository courseRepository, CourseScheduleRepository scheduleRepository) {
         this.courseRepository = courseRepository;
+        this.scheduleRepository = scheduleRepository;
     }
 
     /**
@@ -127,7 +131,7 @@ public class CourseService {
     }
 
     /**
-     * 删除课程记录
+     * 删除课程记录（同步删除关联的课表安排）
      * @param dataRequest 请求参数，包含 courseId
      * @return 操作结果
      */
@@ -144,12 +148,36 @@ public class CourseService {
             }
 
             Optional<Course> op = courseRepository.findById(courseId);
-            if (op.isPresent()) {
-                courseRepository.delete(op.get());
-                log.info("课程删除成功，courseId: {}, 操作人: {}", courseId, CommonMethod.getPersonId());
-            } else {
+            if (op.isEmpty()) {
                 return CommonMethod.getReturnMessageError("课程不存在！");
             }
+
+            // 查找关联的课表记录
+            List<CourseSchedule> allSchedules = scheduleRepository.findAll();
+            List<CourseSchedule> relatedSchedules = new ArrayList<>();
+            
+            for (CourseSchedule schedule : allSchedules) {
+                if (schedule.getCourse() != null && schedule.getCourse().getCourseId().equals(courseId)) {
+                    relatedSchedules.add(schedule);
+                }
+            }
+
+            // 软删除关联的课表记录
+            if (!relatedSchedules.isEmpty()) {
+                for (CourseSchedule schedule : relatedSchedules) {
+                    schedule.setStatus(2); // 2=停用
+                    schedule.setTeacher(null);
+                    schedule.setDayOfWeek(null);
+                    schedule.setStartPeriod(null);
+                    schedule.setEndPeriod(null);
+                    schedule.setLocation(null);
+                    scheduleRepository.save(schedule);
+                }
+                log.info("课程删除时同步停用 {} 条课表记录", relatedSchedules.size());
+            }
+
+            courseRepository.delete(op.get());
+            log.info("课程删除成功，courseId: {}, 操作人: {}", courseId, CommonMethod.getPersonId());
             return CommonMethod.getReturnMessageOK();
         } catch (Exception e) {
             log.error("删除课程失败", e);
