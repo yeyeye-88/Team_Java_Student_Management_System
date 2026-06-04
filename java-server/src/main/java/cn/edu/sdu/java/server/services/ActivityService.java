@@ -62,6 +62,8 @@ public class ActivityService {
             activity.setEndTime(endTime);
             activity.setDescription(description);
             activity.setPublisherId(CommonMethod.getPersonId());
+            // 设置默认状态:0=未开始
+            activity.setStatus(0);
             activity.setCreateTime(new Date());
 
             activityRepository.save(activity);
