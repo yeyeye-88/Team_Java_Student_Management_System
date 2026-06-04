@@ -77,6 +77,10 @@ public class CourseService {
             String num = CommonMethod.getString(form, "num");
             String name = CommonMethod.getString(form, "name");
             String coursePath = CommonMethod.getString(form, "coursePath");
+            // 为课程路径设置默认值,避免空值
+            if (coursePath == null || coursePath.trim().isEmpty()) {
+                coursePath = "OTHER";
+            }
             Integer credit = CommonMethod.getInteger(form, "credit");
             Integer preCourseId = CommonMethod.getInteger(form, "preCourseId");
 
