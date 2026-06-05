@@ -35,16 +35,18 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final StudentRepository studentRepository;
+    private final RequestLogRepository requestLogRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final PasswordEncoder encoder;
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    public AuthService(PersonRepository personRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, StudentRepository studentRepository,AuthenticationManager authenticationManager, JwtService jwtService, PasswordEncoder encoder) {
+    public AuthService(PersonRepository personRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, StudentRepository studentRepository, RequestLogRepository requestLogRepository, AuthenticationManager authenticationManager, JwtService jwtService, PasswordEncoder encoder) {
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.userTypeRepository = userTypeRepository;
         this.studentRepository = studentRepository;
+        this.requestLogRepository = requestLogRepository;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.encoder = encoder;
@@ -63,13 +65,26 @@ public class AuthService {
             Optional<User> op= userRepository.findByUserName(loginRequest.getUsername());
             if(op.isPresent()) {
                 User user= op.get();
-                user.setLastLoginTime(DateTimeTool.parseDateTime(new Date()));
+                String loginTime = DateTimeTool.parseDateTime(new Date());
+                user.setLastLoginTime(loginTime);
                 Integer count = user.getLoginCount();
                 if (count == null)
                     count = 1;
                 else count += 1;
                 user.setLoginCount(count);
                 userRepository.save(user);
+                
+                // 记录登录请求日志，用于统计每日登录次数
+                try {
+                    RequestLog requestLog = new RequestLog();
+                    requestLog.setUrl("/auth/login");
+                    requestLog.setUsername(loginRequest.getUsername());
+                    requestLog.setStartTime(loginTime);
+                    requestLog.setRequestTime(0.0);
+                    requestLogRepository.save(requestLog);
+                } catch (Exception e) {
+                    log.error("保存登录日志失败: {}", e.getMessage());
+                }
             }
             String jwt = jwtService.generateToken(userDetails);
             return ResponseEntity.ok(new JwtResponse(jwt,
