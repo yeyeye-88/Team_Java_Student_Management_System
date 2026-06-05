@@ -157,27 +157,12 @@ public class CourseService {
             }
 
             // 查找关联的课表记录
-            List<CourseSchedule> allSchedules = scheduleRepository.findAll();
-            List<CourseSchedule> relatedSchedules = new ArrayList<>();
-            
-            for (CourseSchedule schedule : allSchedules) {
-                if (schedule.getCourse() != null && schedule.getCourse().getCourseId().equals(courseId)) {
-                    relatedSchedules.add(schedule);
-                }
-            }
+            List<CourseSchedule> relatedSchedules = scheduleRepository.findByCourse_CourseId(courseId);
 
-            // 软删除关联的课表记录
+            // 直接删除关联的课表记录，避免 NOT NULL 约束冲突
             if (!relatedSchedules.isEmpty()) {
-                for (CourseSchedule schedule : relatedSchedules) {
-                    schedule.setStatus(2); // 2=停用
-                    schedule.setTeacher(null);
-                    schedule.setDayOfWeek(null);
-                    schedule.setStartPeriod(null);
-                    schedule.setEndPeriod(null);
-                    schedule.setLocation(null);
-                    scheduleRepository.save(schedule);
-                }
-                log.info("课程删除时同步停用 {} 条课表记录", relatedSchedules.size());
+                scheduleRepository.deleteAll(relatedSchedules);
+                log.info("课程删除时同步删除 {} 条关联的课表记录", relatedSchedules.size());
             }
 
             courseRepository.delete(op.get());

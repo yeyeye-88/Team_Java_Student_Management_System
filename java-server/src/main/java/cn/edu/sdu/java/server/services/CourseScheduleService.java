@@ -291,12 +291,6 @@ public class CourseScheduleService {
 
             CourseSchedule schedule = scheduleOpt.get();
             schedule.setStatus(2); // 2=停用
-            // 清空排课信息
-            schedule.setTeacher(null);
-            schedule.setDayOfWeek(null);
-            schedule.setStartPeriod(null);
-            schedule.setEndPeriod(null);
-            schedule.setLocation(null);
             scheduleRepository.save(schedule);
 
             log.info("删除课表成功，scheduleId: {}", scheduleId);

@@ -3,6 +3,7 @@ package cn.edu.sdu.java.server.repositorys;
 import cn.edu.sdu.java.server.models.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -37,4 +38,13 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     @Query("SELECT a.course.courseId, a.state, COUNT(a.attendanceId) " +
            "FROM Attendance a GROUP BY a.course.courseId, a.state")
     List<Object[]> getAttendanceStatsByCourseAndState();
+    
+    // 支持多条件组合查询
+    @Query("SELECT a FROM Attendance a WHERE " +
+           "(:personId IS NULL OR a.student.person.personId = :personId) AND " +
+           "(:courseId IS NULL OR a.course.courseId = :courseId) AND " +
+           "(:state IS NULL OR a.state = :state)")
+    List<Attendance> findByConditions(@Param("personId") Integer personId,
+                                     @Param("courseId") Integer courseId,
+                                     @Param("state") Integer state);
 }

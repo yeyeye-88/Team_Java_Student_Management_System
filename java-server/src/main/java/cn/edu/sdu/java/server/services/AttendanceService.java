@@ -54,19 +54,8 @@ public class AttendanceService {
             }
 
             List<Attendance> attendanceList;
-            if (courseId != null && courseId > 0) {
-                // 按课程查询
-                attendanceList = attendanceRepository.findByCourseCourseId(courseId);
-            } else if (state != null) {
-                // 按状态查询
-                attendanceList = attendanceRepository.findByState(state);
-            } else if (personId != null && personId > 0) {
-                // 按学生 ID 查询
-                attendanceList = attendanceRepository.findByStudentPersonId(personId);
-            } else {
-                // 管理员查询所有
-                attendanceList = attendanceRepository.findAll();
-            }
+            // 支持多条件组合查询
+            attendanceList = attendanceRepository.findByConditions(personId, courseId, state);
 
             return CommonMethod.getReturnData(getAttendanceMapList(attendanceList));
         } catch (Exception e) {
