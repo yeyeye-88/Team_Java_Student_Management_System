@@ -68,7 +68,7 @@ public class HonorService {
             record.setAwardDate(awardDate);
             record.setIssuer(issuer);
             record.setRecorderId(CommonMethod.getPersonId()); // 记录录入人
-            record.setStatus(1); // 默认已通过
+            record.setStatus(0); // 默认为待审核
             record.setCreateTime(new Date());
 
             honorRecordRepository.save(record);
@@ -77,6 +77,106 @@ public class HonorService {
         } catch (Exception e) {
             log.error("录入荣誉失败", e);
             throw new RuntimeException("录入失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 学生提交荣誉申请
+     */
+    public DataResponse submitHonor(DataRequest dataRequest) {
+        try {
+            // 权限校验：只有学生可以提交自己的荣誉申请
+            if (!RoleCheckUtil.hasRole("STUDENT")) {
+                return CommonMethod.getReturnMessageError("抱歉，此功能仅对学生开放！");
+            }
+
+            Map<String, Object> form = dataRequest.getMap("form");
+            String title = CommonMethod.getString(form, "title");
+            String level = CommonMethod.getString(form, "level");
+            String category = CommonMethod.getString(form, "category");
+            String description = CommonMethod.getString(form, "description");
+            Date awardDate = CommonMethod.getDate(form, "awardDate");
+            String issuer = CommonMethod.getString(form, "issuer");
+            String certificateUrl = CommonMethod.getString(form, "certificateUrl");
+
+            // 参数校验
+            String errorMsg = ParamCheckUtil.checkRequired(title, "奖项名称");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            Integer currentPersonId = CommonMethod.getPersonId();
+            if (currentPersonId == null) {
+                return CommonMethod.getReturnMessageError("用户未登录！");
+            }
+
+            // 创建荣誉记录
+            HonorRecord record = new HonorRecord();
+            record.setPersonId(currentPersonId);
+            record.setTitle(title);
+            record.setLevel(level);
+            record.setCategory(category);
+            record.setDescription(description);
+            record.setAwardDate(awardDate);
+            record.setIssuer(issuer);
+            record.setCertificateUrl(certificateUrl);
+            record.setRecorderId(currentPersonId); // 申请人即为录入人
+            record.setStatus(0); // 待审核
+            record.setCreateTime(new Date());
+
+            honorRecordRepository.save(record);
+            log.info("学生提交荣誉申请成功，personId: {}, title: {}", currentPersonId, title);
+            return CommonMethod.getReturnData(record.getHonorId());
+        } catch (Exception e) {
+            log.error("学生提交荣誉申请失败", e);
+            throw new RuntimeException("提交失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 审核荣誉（管理员或教师）
+     */
+    public DataResponse auditHonor(DataRequest dataRequest) {
+        try {
+            // 权限校验：只有管理员和教师可以审核
+            if (!RoleCheckUtil.isAdminOrTeacher()) {
+                return CommonMethod.getReturnMessageError("权限不足，只有管理员和教师可以审核荣誉！");
+            }
+
+            Map<String, Object> form = dataRequest.getMap("form");
+            Integer honorId = CommonMethod.getInteger(form, "honorId");
+            Integer status = CommonMethod.getInteger(form, "status"); // 1=通过，2=驳回
+            String remark = CommonMethod.getString(form, "remark"); // 审核备注
+
+            // 参数校验
+            String errorMsg = ParamCheckUtil.checkRequired(honorId != null ? honorId.toString() : "", "荣誉 ID");
+            if (errorMsg != null) return CommonMethod.getReturnMessageError(errorMsg);
+
+            if (status == null || (status != 1 && status != 2)) {
+                return CommonMethod.getReturnMessageError("审核状态不正确，必须为 1（通过）或 2（驳回）！");
+            }
+
+            // 查询荣誉记录
+            Optional<HonorRecord> honorOpt = honorRecordRepository.findById(honorId);
+            if (honorOpt.isEmpty()) {
+                return CommonMethod.getReturnMessageError("荣誉记录不存在！");
+            }
+
+            HonorRecord honor = honorOpt.get();
+            
+            // 检查当前状态
+            if (honor.getStatus() != null && honor.getStatus() != 0) {
+                return CommonMethod.getReturnMessageError("该荣誉已审核，无法重复审核！");
+            }
+
+            // 更新状态
+            honor.setStatus(status);
+            honorRecordRepository.save(honor);
+
+            String statusText = status == 1 ? "通过" : "驳回";
+            log.info("审核荣誉{}，honorId: {}, 操作人: {}, 备注: {}", statusText, honorId, CommonMethod.getPersonId(), remark);
+            return CommonMethod.getReturnMessageOK("荣誉已" + statusText);
+        } catch (Exception e) {
+            log.error("审核荣誉失败", e);
+            throw new RuntimeException("审核失败：" + e.getMessage());
         }
     }
 

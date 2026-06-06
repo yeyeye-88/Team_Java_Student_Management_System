@@ -31,6 +31,24 @@ public class HonorController {
     }
 
     /**
+     * 学生提交荣誉申请
+     * 权限：学生
+     */
+    @PostMapping("/submitHonor")
+    public DataResponse submitHonor(@Valid @RequestBody DataRequest dataRequest) {
+        return honorService.submitHonor(dataRequest);
+    }
+
+    /**
+     * 审核荣誉（通过/驳回）
+     * 权限：管理员/教师
+     */
+    @PostMapping("/auditHonor")
+    public DataResponse auditHonor(@Valid @RequestBody DataRequest dataRequest) {
+        return honorService.auditHonor(dataRequest);
+    }
+
+    /**
      * 查询荣誉列表
      * 权限：管理员可查全部，学生只能查自己
      */
