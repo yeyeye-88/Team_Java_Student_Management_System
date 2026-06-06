@@ -146,8 +146,15 @@ public class InnovationService {
                 return CommonMethod.getReturnMessageError("项目不存在！");
             }
 
+            InnovationProject project = projectOpt.get();
+            
+            // 检查项目状态：已终止的项目不能提交成果
+            if (project.getStatus() != null && project.getStatus() == 2) {
+                return CommonMethod.getReturnMessageError("该项目已终止，无法提交成果！");
+            }
+
             InnovationAchievement achievement = new InnovationAchievement();
-            achievement.setProject(projectOpt.get());
+            achievement.setProject(project);
             achievement.setPersonId(personId);
             achievement.setTitle(title);
             achievement.setContent(content);
