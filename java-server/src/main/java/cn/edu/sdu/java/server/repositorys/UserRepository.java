@@ -35,11 +35,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     long count();
 
     /**
-     * 统计指定日期范围内的登录次数（从 request_log 表统计）
+     * 统计指定日期范围内的登录次数（从 request_log 表统计 /auth/login 请求数）
      * @param startTime 开始时间 yyyy-MM-dd HH:mm:ss
      * @param endTime 结束时间 yyyy-MM-dd HH:mm:ss
      * @return 登录次数
      */
-    @Query(value = "SELECT COUNT(*) FROM RequestLog WHERE url = '/auth/login' AND startTime >= ?1 AND startTime <= ?2")
+    @Query(value = "SELECT COUNT(*) FROM RequestLog r WHERE r.url = '/auth/login' AND r.startTime >= ?1 AND r.startTime <= ?2")
     Integer countLoginByDate(String startTime, String endTime);
 }

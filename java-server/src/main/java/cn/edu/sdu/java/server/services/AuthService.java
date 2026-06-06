@@ -76,14 +76,16 @@ public class AuthService {
                 
                 // 记录登录请求日志，用于统计每日登录次数
                 try {
+                    log.info("开始保存登录日志: username={}, url={}", loginRequest.getUsername(), "/auth/login");
                     RequestLog requestLog = new RequestLog();
                     requestLog.setUrl("/auth/login");
                     requestLog.setUsername(loginRequest.getUsername());
                     requestLog.setStartTime(loginTime);
                     requestLog.setRequestTime(0.0);
                     requestLogRepository.save(requestLog);
+                    log.info("登录日志保存成功");
                 } catch (Exception e) {
-                    log.error("保存登录日志失败: {}", e.getMessage());
+                    log.error("保存登录日志失败: {}", e.getMessage(), e);
                 }
             }
             String jwt = jwtService.generateToken(userDetails);
