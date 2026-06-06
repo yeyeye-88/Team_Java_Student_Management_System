@@ -54,4 +54,12 @@ public class ActivityController {
         Integer personId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "personId") : null;
         return activityService.getParticipationList(activityId, personId);
     }
+
+    /**
+     * 取消活动
+     */
+    @PostMapping("/cancel")
+    public DataResponse cancelActivity(@Valid @RequestBody DataRequest dataRequest) {
+        return activityService.cancelActivity(dataRequest);
+    }
 }

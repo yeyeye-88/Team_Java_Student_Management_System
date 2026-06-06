@@ -55,4 +55,12 @@ public class InnovationController {
         Integer personId = dataRequest != null ? CommonMethod.getInteger(dataRequest.getMap("data"), "personId") : null;
         return innovationService.getAchievementList(projectId, personId);
     }
+
+    /**
+     * 终止项目
+     */
+    @PostMapping("/terminateProject")
+    public DataResponse terminateProject(@Valid @RequestBody DataRequest dataRequest) {
+        return innovationService.terminateProject(dataRequest);
+    }
 }

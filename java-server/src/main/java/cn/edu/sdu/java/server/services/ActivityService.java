@@ -90,6 +90,7 @@ public class ActivityService {
                 m.put("endTime", activity.getEndTime());
                 m.put("description", activity.getDescription());
                 m.put("publisherId", activity.getPublisherId());
+                m.put("status", activity.getStatus());
                 m.put("createTime", activity.getCreateTime());
                 list.add(m);
             }
@@ -124,12 +125,6 @@ public class ActivityService {
             }
             personId = currentPersonId;
 
-            // 检查是否已参与
-            ActivityParticipation existing = participationRepository.findByActivityIdAndPersonId(activityId, personId);
-            if (existing != null) {
-                return CommonMethod.getReturnMessageError("您已参与该活动，请勿重复报名！");
-            }
-
             // 检查活动是否存在
             if (activityId == null || activityId <= 0) {
                 return CommonMethod.getReturnMessageError("活动 ID 不能为空！");
@@ -139,8 +134,21 @@ public class ActivityService {
                 return CommonMethod.getReturnMessageError("活动不存在！");
             }
 
+            Activity activity = activityOpt.get();
+            
+            // 检查活动状态：已取消的活动不能报名
+            if (activity.getStatus() != null && activity.getStatus() == 3) {
+                return CommonMethod.getReturnMessageError("该活动已取消，无法报名！");
+            }
+            
+            // 检查是否已参与
+            ActivityParticipation existing = participationRepository.findByActivityIdAndPersonId(activityId, personId);
+            if (existing != null) {
+                return CommonMethod.getReturnMessageError("您已参与该活动，请勿重复报名！");
+            }
+
             ActivityParticipation participation = new ActivityParticipation();
-            participation.setActivity(activityOpt.get());
+            participation.setActivity(activity);
             participation.setPersonId(personId);
             participation.setJoinTime(new Date());
 
