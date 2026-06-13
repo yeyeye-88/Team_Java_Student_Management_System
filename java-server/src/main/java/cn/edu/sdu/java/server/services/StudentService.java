@@ -175,6 +175,18 @@ public class StudentService {
                 return CommonMethod.getReturnMessageError("学生 ID 不能为空！");
             }
 
+            // 权限校验：学生只能查看自己的信息
+            if (!RoleCheckUtil.isAdmin()) {
+                Integer currentPersonId = CommonMethod.getPersonId();
+                if (currentPersonId == null) {
+                    return CommonMethod.getReturnMessageError("用户未登录！");
+                }
+                if (!currentPersonId.equals(personId)) {
+                    log.warn("越权访问拦截：用户 {} 尝试查看用户 {} 的信息", currentPersonId, personId);
+                    return CommonMethod.getReturnMessageError("权限不足，只能查看自己的信息！");
+                }
+            }
+
             Optional<Student> op = studentRepository.findById(personId);
             if (op.isEmpty()) {
                 return CommonMethod.getReturnMessageError("学生不存在！");
@@ -216,6 +228,19 @@ public class StudentService {
             }
             if (ParamCheckUtil.isOverLength(major, 50)) {
                 return CommonMethod.getReturnMessageError("专业名称过长！");
+            }
+
+            // 权限校验：学生只能修改自己的信息
+            if (!RoleCheckUtil.isAdmin()) {
+                Integer currentPersonId = CommonMethod.getPersonId();
+                if (currentPersonId == null) {
+                    return CommonMethod.getReturnMessageError("用户未登录！");
+                }
+                // 新增时允许学生创建自己的学籍记录
+                if (personId != null && !currentPersonId.equals(personId)) {
+                    log.warn("越权修改拦截：用户 {} 尝试修改用户 {} 的信息", currentPersonId, personId);
+                    return CommonMethod.getReturnMessageError("权限不足，只能修改自己的信息！");
+                }
             }
 
             Student s = null;
