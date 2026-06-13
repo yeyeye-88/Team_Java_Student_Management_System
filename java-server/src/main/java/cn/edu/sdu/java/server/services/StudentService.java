@@ -43,7 +43,10 @@ public class StudentService {
     private final FamilyMemberRepository familyMemberRepository;
     private final SystemService systemService;
     private final ScoreRepository scoreRepository;
-    public StudentService(PersonRepository personRepository, StudentRepository studentRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, PasswordEncoder encoder, FeeRepository feeRepository, FamilyMemberRepository familyMemberRepository, SystemService systemService, ScoreRepository scoreRepository) {
+    private final CourseScheduleRepository scheduleRepository;
+    private final TeacherRepository teacherRepository;
+    
+    public StudentService(PersonRepository personRepository, StudentRepository studentRepository, UserRepository userRepository, UserTypeRepository userTypeRepository, PasswordEncoder encoder, FeeRepository feeRepository, FamilyMemberRepository familyMemberRepository, SystemService systemService, ScoreRepository scoreRepository, CourseScheduleRepository scheduleRepository, TeacherRepository teacherRepository) {
         this.personRepository = personRepository;
         this.studentRepository = studentRepository;
         this.userRepository = userRepository;
@@ -53,6 +56,8 @@ public class StudentService {
         this.familyMemberRepository = familyMemberRepository;
         this.systemService = systemService;
         this.scoreRepository = scoreRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     public Map<String,Object> getMapFromStudent(Student s) {
@@ -175,15 +180,26 @@ public class StudentService {
                 return CommonMethod.getReturnMessageError("学生 ID 不能为空！");
             }
 
-            // 权限校验：学生只能查看自己的信息
+            // 权限校验：学生只能查看自己的信息，老师只能查看自己班级的学生
             if (!RoleCheckUtil.isAdmin()) {
                 Integer currentPersonId = CommonMethod.getPersonId();
                 if (currentPersonId == null) {
                     return CommonMethod.getReturnMessageError("用户未登录！");
                 }
-                if (!currentPersonId.equals(personId)) {
-                    log.warn("越权访问拦截：用户 {} 尝试查看用户 {} 的信息", currentPersonId, personId);
-                    return CommonMethod.getReturnMessageError("权限不足，只能查看自己的信息！");
+                
+                // 学生只能查看自己
+                if (RoleCheckUtil.isStudent()) {
+                    if (!currentPersonId.equals(personId)) {
+                        log.warn("越权访问拦截：学生 {} 尝试查看学生 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能查看自己的信息！");
+                    }
+                }
+                // 老师只能查看自己班级的学生
+                else if (RoleCheckUtil.hasRole("TEACHER")) {
+                    if (!isTeacherCanAccessStudent(currentPersonId, personId)) {
+                        log.warn("越权访问拦截：老师 {} 尝试查看非本班学生 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能查看自己所教班级的学生！");
+                    }
                 }
             }
 
@@ -230,16 +246,31 @@ public class StudentService {
                 return CommonMethod.getReturnMessageError("专业名称过长！");
             }
 
-            // 权限校验：学生只能修改自己的信息
+            // 权限校验：学生只能修改自己的信息，老师只能修改自己班级的学生
             if (!RoleCheckUtil.isAdmin()) {
                 Integer currentPersonId = CommonMethod.getPersonId();
                 if (currentPersonId == null) {
                     return CommonMethod.getReturnMessageError("用户未登录！");
                 }
-                // 新增时允许学生创建自己的学籍记录
-                if (personId != null && !currentPersonId.equals(personId)) {
-                    log.warn("越权修改拦截：用户 {} 尝试修改用户 {} 的信息", currentPersonId, personId);
-                    return CommonMethod.getReturnMessageError("权限不足，只能修改自己的信息！");
+                
+                // 学生只能修改自己
+                if (RoleCheckUtil.isStudent()) {
+                    // 新增时允许学生创建自己的学籍记录
+                    if (personId != null && !currentPersonId.equals(personId)) {
+                        log.warn("越权修改拦截：学生 {} 尝试修改学生 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能修改自己的信息！");
+                    }
+                }
+                // 老师只能修改自己班级的学生
+                else if (RoleCheckUtil.hasRole("TEACHER")) {
+                    // 老师不能新增学生，只能修改已有学生
+                    if (personId == null) {
+                        return CommonMethod.getReturnMessageError("权限不足，老师不能新增学生！");
+                    }
+                    if (!isTeacherCanAccessStudent(currentPersonId, personId)) {
+                        log.warn("越权修改拦截：老师 {} 尝试修改非本班学生 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能修改自己所教班级的学生！");
+                    }
                 }
             }
 
@@ -689,6 +720,44 @@ public class StudentService {
         } catch (Exception e) {
             log.error("查询学生介绍数据失败", e);
             return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 检查老师是否有权限访问指定学生（基于课表关联的班级）
+     * @param teacherPersonId 老师的 personId
+     * @param studentPersonId 学生的 personId
+     * @return true=有权限，false=无权限
+     */
+    private boolean isTeacherCanAccessStudent(Integer teacherPersonId, Integer studentPersonId) {
+        try {
+            // 1. 查询学生信息，获取班级名称
+            Optional<Student> studentOpt = studentRepository.findById(studentPersonId);
+            if (studentOpt.isEmpty()) {
+                return false;
+            }
+            String studentClassName = studentOpt.get().getClassName();
+            if (studentClassName == null || studentClassName.trim().isEmpty()) {
+                return false;
+            }
+
+            // 2. 查询该老师所教的所有班级（通过 course_schedule 表）
+            List<CourseSchedule> schedules = scheduleRepository.findByTeacherIdAndSemester(
+                teacherPersonId, 
+                "2026春季" // TODO: 可以从请求参数中获取学期，或查询所有学期的记录
+            );
+
+            // 3. 检查学生的班级是否在老师所教的班级列表中
+            for (CourseSchedule schedule : schedules) {
+                if (studentClassName.equals(schedule.getClassName())) {
+                    return true; // 找到匹配的班级，允许访问
+                }
+            }
+
+            return false; // 未找到匹配的班级，拒绝访问
+        } catch (Exception e) {
+            log.error("检查老师访问学生权限失败，teacherId: {}, studentId: {}", teacherPersonId, studentPersonId, e);
+            return false; // 出错时默认拒绝访问
         }
     }
 }
