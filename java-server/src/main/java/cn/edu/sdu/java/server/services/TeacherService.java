@@ -18,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,6 +44,53 @@ public class TeacherService {
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
         this.systemService = systemService;
+    }
+
+    /**
+     * 获取教师列表（管理员查看所有，教师只能查看自己）
+     * @param dataRequest 请求参数，包含查询条件（可选）
+     * @return 教师列表
+     */
+    public DataResponse getTeacherList(DataRequest dataRequest) {
+        try {
+            // 权限校验：教师只能查看自己的信息
+            Integer currentPersonId = CommonMethod.getPersonId();
+            if (currentPersonId == null) {
+                return CommonMethod.getReturnMessageError("用户未登录！");
+            }
+
+            List<Teacher> teachers;
+            
+            // 管理员可以查看所有教师
+            if (RoleCheckUtil.isAdmin()) {
+                teachers = teacherRepository.findAll();
+            } 
+            // 教师只能查看自己
+            else if (RoleCheckUtil.hasRole("TEACHER")) {
+                Optional<Teacher> op = teacherRepository.findById(currentPersonId);
+                if (op.isPresent()) {
+                    teachers = List.of(op.get());
+                } else {
+                    teachers = new ArrayList<>();
+                }
+            } 
+            // 其他角色不允许查看
+            else {
+                log.warn("非管理员/教师尝试查看教师列表，当前用户: {}", currentPersonId);
+                return CommonMethod.getReturnMessageError("权限不足，无法查看教师列表！");
+            }
+
+            // 转换为 Map 列表
+            List<Map<String, Object>> list = new ArrayList<>();
+            for (Teacher t : teachers) {
+                list.add(getMapFromTeacher(t));
+            }
+
+            return CommonMethod.getReturnData(list);
+        } catch (Exception e) {
+            log.error("查询教师列表失败", e);
+            return CommonMethod.getReturnMessageError("查询失败：" + e.getMessage());
+        }
     }
 
     /**
