@@ -23,6 +23,17 @@ public class TeacherController {
     }
 
     /**
+     * 获取教师列表（管理员查看所有，教师只能查看自己）
+     * @param dataRequest 包含查询条件（可选）
+     * @return 教师列表
+     */
+    @PostMapping("/getTeacherList")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+    public DataResponse getTeacherList(@Valid @RequestBody DataRequest dataRequest) {
+        return teacherService.getTeacherList(dataRequest);
+    }
+
+    /**
      * 获取教师详细信息
      * @param dataRequest 包含 personId（教师主键）
      * @return 教师详细信息

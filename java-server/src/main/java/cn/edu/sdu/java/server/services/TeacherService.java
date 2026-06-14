@@ -100,9 +100,18 @@ public class TeacherService {
                 if (currentPersonId == null) {
                     return CommonMethod.getReturnMessageError("用户未登录！");
                 }
-                if (!currentPersonId.equals(personId)) {
-                    log.warn("越权访问拦截：老师 {} 尝试查看老师 {} 的信息", currentPersonId, personId);
-                    return CommonMethod.getReturnMessageError("权限不足，只能查看自己的信息！");
+                
+                // 如果是教师角色，只能查看自己的信息
+                if (RoleCheckUtil.hasRole("TEACHER")) {
+                    if (!currentPersonId.equals(personId)) {
+                        log.warn("越权访问拦截：老师 {} 尝试查看老师 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能查看自己的信息！");
+                    }
+                }
+                // 其他角色（如学生）不允许查看教师信息
+                else {
+                    log.warn("非管理员/教师尝试查看教师信息，personId: {}, 当前用户: {}", personId, currentPersonId);
+                    return CommonMethod.getReturnMessageError("权限不足，无法查看教师信息！");
                 }
             }
 
@@ -148,9 +157,18 @@ public class TeacherService {
                 if (currentPersonId == null) {
                     return CommonMethod.getReturnMessageError("用户未登录！");
                 }
-                if (personId == null || !currentPersonId.equals(personId)) {
-                    log.warn("越权修改拦截：老师 {} 尝试修改老师 {} 的信息", currentPersonId, personId);
-                    return CommonMethod.getReturnMessageError("权限不足，只能修改自己的信息！");
+                
+                // 如果是教师角色，只能修改自己的信息
+                if (RoleCheckUtil.hasRole("TEACHER")) {
+                    if (personId == null || !currentPersonId.equals(personId)) {
+                        log.warn("越权修改拦截：老师 {} 尝试修改老师 {} 的信息", currentPersonId, personId);
+                        return CommonMethod.getReturnMessageError("权限不足，只能修改自己的信息！");
+                    }
+                }
+                // 其他角色（如学生）不允许修改教师信息
+                else {
+                    log.warn("非管理员/教师尝试修改教师信息，personId: {}, 当前用户: {}", personId, currentPersonId);
+                    return CommonMethod.getReturnMessageError("权限不足，无法修改教师信息！");
                 }
             }
 
