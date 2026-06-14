@@ -740,17 +740,24 @@ public class StudentService {
             if (studentClassName == null || studentClassName.trim().isEmpty()) {
                 return false;
             }
+            
+            // 清理学生班级名称的前后空格
+            studentClassName = studentClassName.trim();
 
-            // 2. 查询该老师所教的所有班级（通过 course_schedule 表）
-            List<CourseSchedule> schedules = scheduleRepository.findByTeacherIdAndSemester(
-                teacherPersonId, 
-                "2026春季" // TODO: 可以从请求参数中获取学期，或查询所有学期的记录
-            );
+            // 2. 查询该老师所教的所有班级（查询所有学期）
+            List<CourseSchedule> schedules = scheduleRepository.findByTeacherIdAllSemesters(teacherPersonId);
 
-            // 3. 检查学生的班级是否在老师所教的班级列表中
+            // 3. 检查学生的班级是否在老师所教的班级列表中（增加字符串模糊匹配容错）
             for (CourseSchedule schedule : schedules) {
-                if (studentClassName.equals(schedule.getClassName())) {
-                    return true; // 找到匹配的班级，允许访问
+                String scheduleClassName = schedule.getClassName();
+                if (scheduleClassName != null && !scheduleClassName.trim().isEmpty()) {
+                    scheduleClassName = scheduleClassName.trim();
+                    
+                    // 放弃严格的 equals，改用相互包含 (contains) 机制
+                    // 只要"1班"包含在"软件工程1班"中，或者反之，都予以放行
+                    if (studentClassName.contains(scheduleClassName) || scheduleClassName.contains(studentClassName)) {
+                        return true; // 找到匹配的班级，允许访问
+                    }
                 }
             }
 

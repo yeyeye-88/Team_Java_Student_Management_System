@@ -16,6 +16,10 @@ public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, 
     @Query("FROM CourseSchedule WHERE teacher.personId = ?1 AND semester = ?2 AND status = 1 ORDER BY dayOfWeek, startPeriod")
     List<CourseSchedule> findByTeacherIdAndSemester(Integer teacherId, String semester);
 
+    // 按教师查询所有学期的课表（用于权限校验）
+    @Query("FROM CourseSchedule WHERE teacher.personId = ?1 AND status = 1 ORDER BY semester, dayOfWeek, startPeriod")
+    List<CourseSchedule> findByTeacherIdAllSemesters(Integer teacherId);
+
     // 按课程查询课表
     @Query("FROM CourseSchedule WHERE course.courseId = ?1 AND semester = ?2 AND status = 1")
     List<CourseSchedule> findByCourseIdAndSemester(Integer courseId, String semester);
