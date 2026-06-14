@@ -123,7 +123,53 @@ public class StudentService {
                 return CommonMethod.getReturnData(dataList);
             }
 
-            // 管理员或其他角色：查询所有或模糊查询
+            // 老师只能查看自己班级的学生
+            if (RoleCheckUtil.hasRole("TEACHER")) {
+                Integer teacherPersonId = CommonMethod.getPersonId();
+                if (teacherPersonId == null) {
+                    return CommonMethod.getReturnMessageError("用户未登录！");
+                }
+                
+                // 查询该老师所教的所有班级（查询所有学期）
+                List<CourseSchedule> schedules = scheduleRepository.findByTeacherIdAllSemesters(teacherPersonId);
+                
+                // 收集老师所教的所有班级名称
+                Set<String> teacherClassNames = new HashSet<>();
+                for (CourseSchedule schedule : schedules) {
+                    String className = schedule.getClassName();
+                    if (className != null && !className.trim().isEmpty()) {
+                        teacherClassNames.add(className.trim());
+                    }
+                }
+                
+                if (teacherClassNames.isEmpty()) {
+                    // 老师没有排课，返回空列表
+                    return CommonMethod.getReturnData(new ArrayList<>());
+                }
+                
+                // 查询所有学生，然后过滤出老师所教班级的学生
+                String numName = dataRequest.getString("numName");
+                if (numName == null) numName = "";
+                List<Student> allStudents = studentRepository.findStudentListByNumName(numName);
+                
+                List<Map<String,Object>> dataList = new ArrayList<>();
+                for (Student student : allStudents) {
+                    String studentClassName = student.getClassName();
+                    if (studentClassName != null && !studentClassName.trim().isEmpty()) {
+                        studentClassName = studentClassName.trim();
+                        // 检查学生班级是否在老师所教的班级列表中（使用 contains 模糊匹配）
+                        for (String teacherClassName : teacherClassNames) {
+                            if (studentClassName.contains(teacherClassName) || teacherClassName.contains(studentClassName)) {
+                                dataList.add(getMapFromStudent(student));
+                                break;
+                            }
+                        }
+                    }
+                }
+                return CommonMethod.getReturnData(dataList);
+            }
+
+            // 管理员：查询所有或模糊查询
             String numName = dataRequest.getString("numName");
             if (numName == null) numName = ""; 
             List<Map<String,Object>> dataList = getStudentMapList(numName);
